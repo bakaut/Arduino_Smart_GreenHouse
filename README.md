@@ -12,3 +12,5 @@
 https://www.influxdata.com/how-to-send-sensor-data-to-influxdb-from-an-arduino-uno/
 
 https://ipc2u.ru/articles/prostye-resheniya/chto-takoe-mqtt/
+
+https://community.openhab.org/t/influxdb-grafana-persistence-and-graphing/13761
