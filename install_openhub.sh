@@ -9,7 +9,7 @@ echo 'deb https://dl.bintray.com/openhab/apt-repo2 stable main' | sudo tee /etc/
 
 sudo apt-get update
 
-sudo apt-get install openhab2
+sudo apt-get install openhab2 -y
 
 sudo systemctl start openhab2.service
 sudo systemctl status openhab2.service
