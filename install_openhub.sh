@@ -30,5 +30,12 @@ cd /etc/apt/sources.list.d/
 
 sudo wget http://repo.mosquitto.org/debian/mosquitto-jessie.list
 
+curl -O http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key 
+sudo apt-key add mosquitto-repo.gpg.key 
+rm mosquitto-repo.gpg.key 
+cd /etc/apt/sources.list.d/ 
+sudo curl -O 
 sudo apt-get update
-sudo apt-get install mosquitto
+sudo apt-get install mosquitto mosquitto-clients python-mosquitto
+
+sudo apt-get install openhab-addon-action-astro openhab-addon-action-mail openhab-addon-action-mqtt openhab-addon-action-telegram openhab-addon-action-weather openhab-addon-action-xbmc openhab-addon-binding-astro openhab-addon-binding-exec openhab-addon-binding-http openhab-addon-binding-mqtt openhab-addon-binding-weather openhab-addon-binding-xbmc openhab-addon-io-myopenhab openhab-addon-persistence-db4o openhab-addon-persistence-exec openhab-addon-persistence-gcal openhab-addon-persistence-logging openhab-addon-persistence-mqtt openhab-addon-persistence-mysql openhab-addon-persistence-rrd4j 
