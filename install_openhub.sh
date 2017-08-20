@@ -22,3 +22,13 @@ sudo systemctl enable openhab2.service
 #wait 20 min
 
 #http://openhab-device:8080 
+
+sudo wget http://repo.mosquitto.org/debian/mosquitto-repo.gpg.key
+sudo apt-key add mosquitto-repo.gpg.key
+
+cd /etc/apt/sources.list.d/
+
+sudo wget http://repo.mosquitto.org/debian/mosquitto-jessie.list
+
+sudo apt-get update
+sudo apt-get install mosquitto
