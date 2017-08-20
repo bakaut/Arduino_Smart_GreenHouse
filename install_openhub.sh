@@ -1,4 +1,6 @@
 #!/bin/bash
+
+#install influxdb, install grafana, create influxdb db,user
 sudo echo 'deb http://repos.azulsystems.com/debian stable main' > /etc/apt/sources.list.d/zulu.list
 sudo apt-get update
 apt-get install zulu-8 wget apt-transport-https -y
