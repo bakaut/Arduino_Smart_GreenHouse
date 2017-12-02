@@ -26,3 +26,7 @@ https://community.openhab.org/t/influxdb-grafana-persistence-and-graphing/13761
 https://geektimes.ru/post/255352/
 
 http://forum.amperka.ru/threads/arduino-esp8266-raspberry-pi-2-openhab-Умный-дом-азы-управления.5043/#post-40253
+
+
+Сделано:
+Мониторинг температуры, давления, изменения давления, влажности и запись данных на sd карту в формате для influxdb.
