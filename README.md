@@ -9,11 +9,14 @@
 Даные датчиков теплицы отправляются через gprs в формате для influxdb в облако раз в 30 минут. Возможно уведомления в slack через http запросы. Так же данные с датчиков сохраняются на sd карту.
 
 Датчики:
--Температура внутри и снаружи, влажность, 
--Давление, высота над уровнем моря,
--Освещённость (фоторезистор)
+-Температура и влажность внутри и снаружи.
+-Атмосферное давление
+-Освещённость (датчик освещённости)
 
-Ардуино каждую минуту записывает показания датчиков  в формате csv на sd карту и через gprs отправляет их в облако ( http://www.blynk.cc/ || https://thingspeak.com || https://narodmon.ru/ || http://majordomo.smartliving.ru/Main/HomePage || http://pdacontrolen.com || http://www.openhab.org/ https://internetofthings.ibmcloud.com/#/ https://www.ibm.com/internet-of-things https://www.ibm.com/internet-of-things/spotlight/watson-iot-platform/pricing https://habrahabr.ru/company/ibm/blog/318702/)
+Ардуино каждые 10 минут записывает показания датчиков  в формате influxdb на sd карту и раз в сутки через gprs отправляет их в облако.
+
+
+( http://www.blynk.cc/ || https://thingspeak.com || https://narodmon.ru/ || http://majordomo.smartliving.ru/Main/HomePage || http://pdacontrolen.com || http://www.openhab.org/ https://internetofthings.ibmcloud.com/#/ https://www.ibm.com/internet-of-things https://www.ibm.com/internet-of-things/spotlight/watson-iot-platform/pricing https://habrahabr.ru/company/ibm/blog/318702/)
 
 Возможно не csv использовать, а mqtt  протокол и базу influxdb и сразу отправлять в облако
 
