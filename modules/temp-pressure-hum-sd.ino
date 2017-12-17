@@ -1,7 +1,7 @@
-//#include <Time.h>
+#include <Time.h>
 #include <TimeLib.h>
 #include <DS1307RTC.h>
-//#include <Wire.h>
+#include <Wire.h>
 #include "DHT.h"
 #include <SD.h>
 #include <SPI.h>
@@ -38,14 +38,15 @@ long aver_sens() {
 }
 
 void setup() {
+  //turn on power via mosfet
+  pinMode(5, OUTPUT);
+  digitalWrite(5, HIGH);
+  delay(1000);
+  
   Serial.begin(9600);
   
   dht.begin();
-  if (!SD.begin(chipSelect)) {
-  Serial.println("Card failed, or not present");
-  // don't do anything more:
-  return;
-  }
+
   
   if (!bmp.begin()) {
   Serial.println("Could not find a valid BMP085 sensor, check wiring!");
@@ -61,6 +62,13 @@ void setup() {
 }
 
 void loop() {
+  digitalWrite(5, HIGH);
+  delay(500);
+    if (!SD.begin(chipSelect)) {
+  Serial.println("Card failed, or not present");
+  // don't do anything more:
+  return;
+  }
   bmp.readTemperature();  
   //bmp.readAltitude();
   //bmp.readAltitude(100550);//109194 for 731 meter
@@ -71,7 +79,7 @@ void loop() {
   myFile = SD.open("file.txt", FILE_WRITE);
   
   if (RTC.read(tm)) {
-    delay(2000);
+    delay(1000);
     }
   //else {} //set time
   //Считываем влажность
@@ -114,6 +122,9 @@ void loop() {
     a = (long)6 * sumXY;             // расчёт коэффициента наклона приямой
     a = a - (long)sumX * sumY;
     a = (float)a / (6 * sumX2 - sumX * sumX);
+    // Вопрос: зачем столько раз пересчитывать всё отдельными формулами? Почему нельзя считать одной большой?
+    // Ответ: а затем, что ардуинка не хочет считать такие большие числа сразу, и обязательно где-то наё*бывается,
+    // выдавая огромное число, от которого всё идёт по пи*зде. Почему с матами? потому что устал отлаживать >:O
     delta = a * 6;                   // расчёт изменения давления
     
     // if the file opened okay, write to it:
@@ -131,8 +142,14 @@ void loop() {
       myFile.println("000000000");
       // close the file:
       myFile.close();
-      
-      
+      //Serial.print(makeTime(tm));
+      //Serial.print("---");
+      //Serial.print(t);
+      //Serial.print("---");
+      //Serial.print(p);
+      //turn off power via mosfet
+      delay(2000);
+      digitalWrite(5, LOW);
       delay(600000);
 
     } else {
