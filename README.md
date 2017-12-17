@@ -20,6 +20,8 @@
 
 https://devicehive.com/ https://habrahabr.ru/company/dataart/blog/260115/
 
+http://souliss.net/welcome/
+
 Возможно не csv использовать, а mqtt  протокол и базу influxdb и сразу отправлять в облако
 
 https://www.influxdata.com/how-to-send-sensor-data-to-influxdb-from-an-arduino-uno/
