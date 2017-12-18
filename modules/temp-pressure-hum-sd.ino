@@ -8,7 +8,10 @@
 #include <Adafruit_BMP085.h>
 
 
-#define DHTPIN A0 // номер пина, к которому подсоединен датчик
+#define DHTPIN A0 // номер пина, к которому подсоединен датчик температуры
+#define MINI 100
+#define MAXI 700
+#define PAUSE 500
 
 const int chipSelect = 10;
 File myFile;
@@ -18,39 +21,27 @@ unsigned long sumX, sumY, sumX2, sumXY;
 int delta;
 float a;
 
-// Раскомментируйте в соответствии с используемым датчиком
 
-// Инициируем датчик
+// Инициализируем датчик температуры и влажности
 DHT dht(DHTPIN, DHT22);
 
-//Для измерения давления
+//Инициализируем датчик давления
 Adafruit_BMP085 bmp;
 
 
-// среднее арифметичсекое от давления
-long aver_sens() {
-  pressure = 0;
-  for (byte i = 0; i < 10; i++) {
-    pressure += bmp.readPressure();
-  }
-  aver_pressure = pressure / 10;
-  return aver_pressure;
-}
-
 void setup() {
-  //turn on power via mosfet
+  //Включаем питание датчиков через транзистор
   pinMode(5, OUTPUT);
   digitalWrite(5, HIGH);
   delay(1000);
   
-  Serial.begin(9600);
-  
+  //Включаем датчик температуры и влажности
   dht.begin();
 
-  
+  //Включаем датчик давления
   if (!bmp.begin()) {
-  Serial.println("Could not find a valid BMP085 sensor, check wiring!");
-  while (1) {}
+   blinking(13,MINI,MINI,MINI,MAXI,PAUSE);
+   return;
   }
   
   pressure = aver_sens();          // найти текущее давление по среднему арифметическому
@@ -65,7 +56,7 @@ void loop() {
   digitalWrite(5, HIGH);
   delay(500);
     if (!SD.begin(chipSelect)) {
-  Serial.println("Card failed, or not present");
+    blinking(13,MINI,MINI,MAXI,MAXI,PAUSE);
   // don't do anything more:
   return;
   }
@@ -81,12 +72,15 @@ void loop() {
   if (RTC.read(tm)) {
     delay(1000);
     }
-  //else {} //set time
+  else {
+    blinking(13,MINI,MAXI,MAXI,MAXI,PAUSE);
+    return;
+    } //set time
   //Считываем влажность
   
   float h = dht.readHumidity();
   
-  // Считываем температуру
+  // Считываем температуру и давление
   
   float t = dht.readTemperature();
   float p = bmp.readPressure();
@@ -96,8 +90,7 @@ void loop() {
   
   if (isnan(h) || isnan(t)) {
   
-  Serial.println("Не удается считать показания");
-  
+  blinking(13,MAXI,MAXI,MAXI,MAXI,PAUSE);
   return;
   
   }
@@ -142,11 +135,6 @@ void loop() {
       myFile.println("000000000");
       // close the file:
       myFile.close();
-      //Serial.print(makeTime(tm));
-      //Serial.print("---");
-      //Serial.print(t);
-      //Serial.print("---");
-      //Serial.print(p);
       //turn off power via mosfet
       delay(2000);
       digitalWrite(5, LOW);
@@ -154,7 +142,37 @@ void loop() {
 
     } else {
       // if the file didn't open, print an error:
-      Serial.println("error opening test.txt");
+      blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
+      return;
     }
   
   }
+
+// среднее арифметичсекое от давления
+long aver_sens() {
+  pressure = 0;
+  for (byte i = 0; i < 10; i++) {
+    pressure += bmp.readPressure();
+  }
+  aver_pressure = pressure / 10;
+  return aver_pressure;
+}
+
+void blinking (char led, unsigned short a, unsigned short b, unsigned short c, unsigned short d, unsigned short pause)
+{ 
+  pinMode(led, OUTPUT);
+  flash (led,a,pause);
+  flash (led,b,pause);
+  flash (led,c,pause);
+  flash (led,d,pause);
+}
+
+void flash (char led, unsigned short interval, unsigned short pause)
+{
+  digitalWrite(led, HIGH);
+  delay(interval);
+  digitalWrite(led, LOW);
+  delay(pause);  
+  }
+
+
