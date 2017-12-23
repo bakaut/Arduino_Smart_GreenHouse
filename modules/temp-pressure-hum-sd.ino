@@ -14,12 +14,13 @@
 #define PAUSE 500
 
 const int chipSelect = 10;
-File myFile;
+File myFile,daily_file;
 
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
 unsigned long sumX, sumY, sumX2, sumXY;
-int delta;
+int delta,current_day;
 float a;
+String check_data;
 
 
 // Инициализируем датчик температуры и влажности
@@ -64,18 +65,20 @@ void loop() {
   //bmp.readAltitude();
   //bmp.readAltitude(100550);//109194 for 731 meter
   
-  delay(500);
+  delay(200);
   
   tmElements_t tm;
-  myFile = SD.open("file.txt", FILE_WRITE);
   
   if (RTC.read(tm)) {
-    delay(1000);
+    delay(700);
     }
   else {
     blinking(13,MINI,MAXI,MAXI,MAXI,PAUSE);
     return;
-    } //set time
+    } 
+  current_day = tm.Day;
+  myFile = SD.open("file.txt", FILE_WRITE);
+  daily_file = SD.open(String (current_day), FILE_WRITE);
   //Считываем влажность
   
   float h = dht.readHumidity();
@@ -88,7 +91,7 @@ void loop() {
   
   // Проверка удачно прошло ли считывание.
   
-  if (isnan(h) || isnan(t)) {
+  if (isnan(h) && isnan(t)&& isnan(p)) {
   
   blinking(13,MAXI,MAXI,MAXI,MAXI,PAUSE);
   return;
@@ -121,20 +124,14 @@ void loop() {
     delta = a * 6;                   // расчёт изменения давления
     
     // if the file opened okay, write to it:
-    if (myFile) {
-      myFile.print("weather,location=uglovo,region=aerodrom temp=");
-      myFile.print(t);
-      myFile.print(",hum=");
-      myFile.print(h);
-      myFile.print(",pressure=");
-      myFile.print(p);
-      myFile.print(",delta=");
-      myFile.print(delta);
-      myFile.print(" ");
-      myFile.print(makeTime(tm));
-      myFile.println("000000000");
+    if (myFile && daily_file ) {
+      check_data = "weather,location=uglovo,region=aerodrom temp="+String (t)+",hum="+String (h)+",pressure="+String (p)+",delta="+String (delta)+" "+String (makeTime(tm))+"000000000";
+      myFile.println(check_data);
       // close the file:
       myFile.close();
+      daily_file.println(check_data);
+      // close the file:
+      daily_file.close();
       //turn off power via mosfet
       delay(2000);
       digitalWrite(5, LOW);
@@ -174,5 +171,3 @@ void flash (char led, unsigned short interval, unsigned short pause)
   digitalWrite(led, LOW);
   delay(pause);  
   }
-
-
