@@ -12,3 +12,13 @@
 Сделать код для отправки пост запроса через gprs минимальным по объёму.
 За основу https://www.cooking-hacks.com/documentation/tutorials/gprs-gsm-quadband-module-arduino-raspberry-pi-tutorial-sim-900#step7
 Сделать через открытие tcp сессии и  отправки http post запроса. Все serial.print заменить на мигание диода.
+Формат для POST запроса.
+```
+char *sendmsgWork[] = {
+"POST /write?db=weather HTTP/1.1",
+"Host: 169.51.23.245",
+"Content-Type: application/x-www-form-urlencoded",
+"Content-Length: 10\r\n",
+
+"weather,location=uglovo,region=aerodrom temp=4.00,hum=74,pressure=98633.00,delta=19 1513348650000000000"
+};```
