@@ -19,7 +19,7 @@ char *sendmsgWork[] = {
 "Host: 169.51.23.245",
 "Content-Type: application/x-www-form-urlencoded",
 "Content-Length: 10\r\n",
-
+"\r\n",
 "weather,location=uglovo,region=aerodrom temp=4.00,hum=74,pressure=98633.00,delta=19 1513348650000000000"
 };
 {code}
