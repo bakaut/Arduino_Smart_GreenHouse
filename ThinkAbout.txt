@@ -7,3 +7,8 @@
 
 Сделать сервер blinc на кластере kuber от ibm
 1 день недели. 1 неделя
+
+
+Сделать код для отправки пост запроса через gprs минимальным по объёму.
+За основу https://www.cooking-hacks.com/documentation/tutorials/gprs-gsm-quadband-module-arduino-raspberry-pi-tutorial-sim-900#step7
+Сделать через открытие tcp сессии и  отправки http post запроса. Все serial.print заменить на мигание диода.
