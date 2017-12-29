@@ -3,10 +3,16 @@
 #include <DS1307RTC.h>
 #include <Wire.h>
 #include "DHT.h"
-#include <SD.h>
+//#include <SD.h>
 #include <SPI.h>
 #include <Adafruit_BMP085.h>
 
+#include <BlockDriver.h>
+#include <FreeStack.h>
+#include <MinimumSerial.h>
+#include <SdFat.h>
+#include <SdFatConfig.h>
+#include <SysCall.h> 
 
 #define DHTPIN A0 // номер пина, к которому подсоединен датчик температуры
 #define MINI 100
@@ -56,6 +62,7 @@ void setup() {
 void loop() {
   digitalWrite(5, HIGH);
   delay(500);
+  SdFat SD;
     if (!SD.begin(chipSelect)) {
     blinking(13,MINI,MINI,MAXI,MAXI,PAUSE);
   // don't do anything more:
@@ -77,8 +84,7 @@ void loop() {
     return;
     } 
   current_day = tm.Day;
-  myFile = SD.open("file.txt", FILE_WRITE);
-  daily_file = SD.open(String (current_day), FILE_WRITE);
+   
   //Считываем влажность
   
   float h = dht.readHumidity();
@@ -122,16 +128,31 @@ void loop() {
     // Ответ: а затем, что ардуинка не хочет считать такие большие числа сразу, и обязательно где-то наё*бывается,
     // выдавая огромное число, от которого всё идёт по пи*зде. Почему с матами? потому что устал отлаживать >:O
     delta = a * 6;                   // расчёт изменения давления
+
+    myFile = SD.open("file.txt", FILE_WRITE);
+    delay(20);
+
+    check_data = "weather,location=uglovo,region=aerodrom temp="+String (t)+",hum="+String (h)+",pressure="+String (p)+",delta="+String (delta)+" "+String (makeTime(tm))+"000000000";
     
     // if the file opened okay, write to it:
-    if (myFile && daily_file ) {
-      check_data = "weather,location=uglovo,region=aerodrom temp="+String (t)+",hum="+String (h)+",pressure="+String (p)+",delta="+String (delta)+" "+String (makeTime(tm))+"000000000";
+    if (myFile) {
       myFile.println(check_data);
       // close the file:
       myFile.close();
-      daily_file.println(check_data);
-      // close the file:
-      daily_file.close();
+      
+      daily_file = SD.open(String (current_day), FILE_WRITE);
+      delay(20);
+      
+      if (current_day) {
+        daily_file.println(check_data);
+        // close the file:
+        daily_file.close();        
+        }
+      else {
+        blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
+        return;
+        }
+      
       //turn off power via mosfet
       delay(2000);
       digitalWrite(5, LOW);
