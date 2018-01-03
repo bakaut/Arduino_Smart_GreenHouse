@@ -38,8 +38,8 @@ File daily_file;
 #define SerialAT Serial
 
 // or Software Serial on Uno, Nano
-//#include <SoftwareSerial.h>
-//SoftwareSerial SerialAT(3, 2); // RX, TX
+#include <SoftwareSerial.h>
+SoftwareSerial SerialDEBUG(5, 6); // RX, TX
 
 TinyGsm modem(Serial);
 TinyGsmClient client(modem);
@@ -53,7 +53,10 @@ String data_string;
 
 
 void setup() {
- pinMode(4, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(8, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(7, OUTPUT);
   // Set console baud rate
   //Serial.begin(9600);
   //delay(10);
@@ -61,34 +64,41 @@ void setup() {
   // Set GSM module baud rate
   SerialAT.begin(115200);
   delay(1000);
+  
+  SerialDEBUG.begin(115200);
+  delay(1000);
 
   //SerialAT.println("Turn on power gprs shild via mosfet");
-   //turn on power gprs shild via mosfet
-  pinMode(9, OUTPUT);
+  //turn on power gprs shild via mosfet
+
+  SerialDEBUG.print("Turn on power gprs shild via mosfet...");
   digitalWrite(9, HIGH);
+  SerialDEBUG.println("Done");
   
-  //SerialAT.println("Power on gsm-gprs shild");
+  SerialDEBUG.print("Power on gsm-gprs shild...");
   //power on gsm-gprs shild
-  pinMode(7, OUTPUT);
+  
   digitalWrite(7, HIGH);
   delay(2500);
   digitalWrite(7, LOW);
   delay(500);
+  SerialDEBUG.println("Done");
   
   // Restart takes quite some time
   // To skip it, call init() instead of restart()
   //SerialAT.println(F("Initializing modem..."));
   //blinking(13,MINI,MINI,MINI,MINI,300);
-  //waiting(2,3,200);
-  
+  waiting(2,3,200);
+  SerialDEBUG.print("Restarting modem...");
   if (!modem.restart()) {
+      SerialDEBUG.print("Failed");
       flash(3,1,100,100);
       digitalWrite(3, HIGH);
       delay(2000);
       return;
     }
-  //stoping(2,3);
-  
+  stoping(2,3);
+  SerialDEBUG.println("OK");
   flash(2,1,100,100);
 
 //  String modemInfo = modem.getModemInfo();
@@ -100,36 +110,38 @@ void setup() {
 }
 
 void loop() {
+  SerialDEBUG.println("Turn off 1-st arduino");
   
- 
- 
   //turn off 1-st arduino
-  pinMode(8, OUTPUT);
+  
   digitalWrite(8, LOW);
 
-  SerialAT.println(F("Initializing sd..."));
+  SerialDEBUG.print(F("Initializing sd..."));
   SdFat SD;
  
   //init sd card
   if (!SD.begin(chipSelect)) {
     //blinking(13,MINI,MINI,MAXI,MAXI,PAUSE);
   // don't do anything more:
-  //SerialAT.println(F("Initializing sd fail"));
+  SerialDEBUG.println(F("Failed"));
   flash(3,1,100,100);
   digitalWrite(3, HIGH);
   delay(2000);
   return;
   }
-
+  SerialDEBUG.println("Done");
+  SerialDEBUG.print("Open text file...");
+  
   daily_file = SD.open("file.txt");
-
+  
   if (!daily_file) {
-    //SerialAT.print("The text file.tx file cannot be opened");
+    SerialDEBUG.print("The text file.txt file cannot be opened");
     flash(3,2,100,100);
     digitalWrite(3, HIGH);
     delay(2000);
     return;
   }
+  SerialDEBUG.println("Done");
   flash(2,2,100,100);
   //blinking(13,MINI,MINI,MINI,MINI,300);
 
@@ -137,12 +149,12 @@ void loop() {
 
 
   //Connect gprs
-  //SerialAT.println(F("Waiting for network..."));
+  SerialDEBUG.print(F("Waiting for network..."));
   //blinking(13,MINI,MINI,MINI,MINI,300);
   //flash(2,100,100);
   waiting(2,3,200);
   if (!modem.waitForNetwork()) {
-    //SerialAT.println(" fail");
+    SerialDEBUG.println("Failed");
     //blinking(13,MINI,MINI,MAXI,MAXI,PAUSE);
       flash(3,3,100,100);
       digitalWrite(3, HIGH);
@@ -150,15 +162,16 @@ void loop() {
       return;
   }
    stoping(2,3);
-  //SerialAT.println(" OK");
+   SerialDEBUG.println(" OK");
    flash(2,3,100,100);
 
-  //SerialAT.print(F("Connecting to "));
-  //SerialAT.print(apn);
+  SerialDEBUG.print(F("Connecting to "));
+  SerialDEBUG.print(apn);
+  SerialDEBUG.print("...");
   //blinking(13,MINI,MINI,MINI,MINI,300);
   waiting(2,3,200);
   if (!modem.gprsConnect(apn, user, pass)) {
-    //SerialAT.println(" fail");
+     SerialDEBUG.println(" fail");
     //blinking(13,MINI,MINI,MAXI,MAXI,PAUSE);
       flash(3,4,100,100);
       digitalWrite(3, HIGH);
@@ -166,34 +179,38 @@ void loop() {
       return;
   }
   stoping(2,3);
-  //SerialAT.println(" OK");
+  SerialDEBUG.println(" OK");
   flash(2,4,100,100);
 
-  //SerialAT.print(F("Connecting to "));
-  //SerialAT.print(server);
+  SerialDEBUG.print(F("Connecting to "));
+  SerialDEBUG.print(server);
+  SerialDEBUG.print("...");
   //blinking(13,MINI,MINI,MINI,MINI,300);
   waiting(2,3,200);
   if (!client.connect(server, port)) {
-    //SerialAT.println(" fail");
+      SerialDEBUG.println(" fail");
       flash(3,5,100,100);
       digitalWrite(3, HIGH);
       delay(2000);
     return;
   }
   stoping(2,3);
-  //Serial.println(" OK");
+  SerialDEBUG.println(" OK");
   flash(2,5,100,100);
   //blinking(13,MINI,MINI,MINI,MINI,300);
   stoping(2,3);
+  SerialDEBUG.print(F("Read txt file line by line and send data to web server: "));
   while (daily_file.available()) {
     data_string = daily_file.readStringUntil('\n');
-    //SerialAT.println(data_string); //Printing for debugging purpose         
+    SerialDEBUG.println("Readed line: ");
+    SerialDEBUG.println(data_string); //Printing for debugging purpose         
     //do some action here
       // Make a HTTP POST request:
   digitalWrite(2, HIGH);
   digitalWrite(3, HIGH);
   digitalWrite(4, HIGH);
-  
+
+  SerialDEBUG.println("Create and send post request: ");
   //client.print("POST " + String (resource) + " HTTP/1.1\r\nHost: "+ String (server) + "\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length:" + String (data.length()) +"\r\n\r\n"+ String (data));
   client.print(String("POST ") + resource + " HTTP/1.0\r\n");
   client.print(String("Host: ") + server + "\r\n");
@@ -209,44 +226,52 @@ void loop() {
     // Print available data
     while (client.available()) {
       char c = client.read();
-   //   SerialAT.print(c);
+      SerialDEBUG.print(c);
    //flash(2,300,300);
       timeout = millis();
       flash(2,3,50,50);
     }
-  }
+    SerialDEBUG.println();
   digitalWrite(2, LOW);
   digitalWrite(3, LOW);
   digitalWrite(4, LOW);
   delay(1000);
- // SerialAT.println();
   }
-   
+
+  SerialDEBUG.println();
 
   client.stop();
-  //SerialAT.println("Server disconnected");
+  SerialDEBUG.println("Server disconnected");
   flash(2,1,100,100);
  // blinking(13,MINI,MINI,MINI,MINI,300);
   modem.gprsDisconnect();
-  //SerialAT.println("GPRS disconnected");
+  SerialDEBUG.println("GPRS disconnected");
   //blinking(13,MINI,MINI,MINI,MINI,300);
   flash(2,1,100,100);
 
 
   //turn on 1-st arduino
-  pinMode(8, OUTPUT);
   digitalWrite(8, HIGH);
   //blinking(13,MINI,MINI,MINI,MINI,300);
+  SerialDEBUG.println("turn on 1-st arduino");
 
   //turn off power gprs shild via mosfet
-  pinMode(9, OUTPUT);
   digitalWrite(9, LOW);
   //blinking(13,MINI,MINI,MINI,MINI,300);
-  
-  //sleep for a 24 hour //turn off sd card pins
-  while(1);
+   SerialDEBUG.println("turn off power gprs shild via mosfet");
 
+  digitalWrite(2, LOW);
+  digitalWrite(3, LOW);
+  digitalWrite(4, HIGH);
+  //sleep for a 24 hour //turn off sd card pins
+  SerialDEBUG.println("Wait for while");
+  
+  while(1);
+  
+  }
 }
+   
+
 
 //void blinking (char led, unsigned short a, unsigned short b, unsigned short c, unsigned short d, unsigned short pause)
 //{ 
@@ -272,7 +297,7 @@ void flash (char led, char count, unsigned short interval, unsigned short pause)
  
   }
 
-  void waiting (char led1,char led2, unsigned short interval)
+void waiting (char led1,char led2, unsigned short interval)
 { 
   char i;
   pinMode(led1, OUTPUT);
@@ -289,12 +314,12 @@ void flash (char led, char count, unsigned short interval, unsigned short pause)
  
   }
 
-    void stoping (char led1,char led2)
+void stoping (char led1,char led2)
 { 
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   digitalWrite(led1, LOW);
   digitalWrite(led2, LOW);
     
-    }
+}
   
