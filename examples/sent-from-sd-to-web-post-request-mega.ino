@@ -7,6 +7,9 @@
  * TinyGSM Getting Started guide:
  *   http://tiny.cc/tiny-gsm-readme
  * !! SD FAT VERY SMALL! 232 byte. SD 852 byte!
+ * TO DO:
+ * FILE.SEEK SEND LAST 24 *6 values from file
+ * dataFile.seek(dataFile.size()-7);
  **************************************************************/
 
 #define TINY_GSM_MODEM_A7
@@ -78,6 +81,7 @@ void setup() {
 
   //SerialAT.println("Turn on power gprs shild via mosfet");
   //turn on power gprs shild via mosfet
+  SerialDEBUG.println(millis());
 
   SerialDEBUG.print("Turn on power gprs shild via mosfet...");
   digitalWrite(9, HIGH);
@@ -146,7 +150,7 @@ void loop() {
   SerialDEBUG.println("Done");
   SerialDEBUG.print("Open text file...");
   
-  daily_file = SD.open("file.txt", FILE_READ);
+  daily_file = SD.open("file2.txt", FILE_READ);
   
   if (!daily_file) {
     SerialDEBUG.print("The text file.txt file cannot be opened");
@@ -213,8 +217,22 @@ void loop() {
   flash(6,5,100,100);
   //blinking(13,MINI,MINI,MINI,MINI,300);
   stoping(6,5);
+  SerialDEBUG.println(millis());
   SerialDEBUG.print(F("Read txt file line by line and send data to web server: "));
+  SerialDEBUG.println("File length: "+ String (daily_file.size()));
+  SerialDEBUG.println("Set new file position");
+  daily_file.seek(daily_file.size()-15676); //15676 simbols, approx 24*6=144 lines
+ /* int i;
+  i=0;
   while (daily_file.available()) {
+    daily_file.readStringUntil('\n');
+    i=i+1;
+  }
+  SerialDEBUG.println("lines: "+ String (i));
+  */
+  while (daily_file.available()) {
+    SerialDEBUG.println(millis());
+    data_string = daily_file.readStringUntil('\n');
     data_string = daily_file.readStringUntil('\n');
     data_string.trim();
     SerialDEBUG.println("Readed line: ");
@@ -282,7 +300,7 @@ void loop() {
   digitalWrite(4, HIGH);
   //sleep for a 24 hour //turn off sd card pins
   SerialDEBUG.println("Wait for while");
-  
+  SerialDEBUG.println(millis());
   while(1);
   
 }
