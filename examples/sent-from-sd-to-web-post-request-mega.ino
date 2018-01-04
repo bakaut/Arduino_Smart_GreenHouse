@@ -220,45 +220,39 @@ void loop() {
     SerialDEBUG.println("Readed line: ");
     SerialDEBUG.println(data_string); //Printing for debugging purpose         
     //do some action here
-      // Make a HTTP POST request:
-  digitalWrite(6, HIGH);
-  digitalWrite(5, HIGH);
-  digitalWrite(4, HIGH);
+    // Make a HTTP POST request:
+    digitalWrite(6, HIGH);
+    digitalWrite(5, HIGH);
+    digitalWrite(4, HIGH);
 
-  SerialDEBUG.println("Create and send post request: ");
-  SerialDEBUG.println("POST " + String (resource) + " HTTP/1.1\r\nHost: "+ String (server) + "\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length:" + String (data_string.length()) +"\r\n\r\n"+ String (data_string));
-  client.print(String("POST ") + resource + " HTTP/1.1\r\n");
-  client.print(String("Host: ") + server + "\r\n");
-  client.println("Content-Type: application/x-www-form-urlencoded");
-  client.print("Content-Length: ");
-  client.println(data_string.length()); 
-  client.println(); 
-  client.print(data_string);
-  client.println();
-  //client.println();
-  //client.print("Connection: close\r\n\r\n");
-  unsigned long timeout = millis();
-  //char output[1000];
-  while (client.connected() && millis() - timeout < 10000L) {
-    // Print available data
-    while (client.available()) {
-      char c = client.read();
-      SerialDEBUG.print(c);
+    SerialDEBUG.println("Create and send post request: ");
+    SerialDEBUG.println("POST " + String (resource) + " HTTP/1.1\r\nHost: "+ String (server) + "\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length:" + String (data_string.length()) +"\r\n\r\n"+ String (data_string));
+    client.print(String("POST ") + resource + " HTTP/1.1\r\n");
+    client.print(String("Host: ") + server + "\r\n");
+    client.println("Content-Type: application/x-www-form-urlencoded");
+    client.print("Content-Length: ");
+    client.println(data_string.length()); 
+    client.println(); 
+    client.print(data_string);
+    client.println();
+    //client.println();
+    //client.print("Connection: close\r\n\r\n");
+    unsigned long timeout = millis();
 
-      //strcpy(output,"Begin\r\n");
-      //strcpy(output,c);
-      //SerialDEBUG.print(output);
-      //SerialDEBUG.print(c);
-   //flash(6,300,300);
-      timeout = millis();
-      //flash(6,3,50,50);
+    while (client.connected() && millis() - timeout < 10000L) {
+      // Print available data
+      while (client.available()) {
+        char c = client.read();
+        SerialDEBUG.print(c);
+        timeout = millis();
+        //flash(6,3,50,50);
     }
-    //SerialDEBUG.println(output);
+    }
     SerialDEBUG.println();
-  digitalWrite(5, LOW);
-  digitalWrite(6, LOW);
-  digitalWrite(4, LOW);
-  delay(1000);
+    digitalWrite(5, LOW);
+    digitalWrite(6, LOW);
+    digitalWrite(4, LOW);
+    //delay(1000);
   }
 
   SerialDEBUG.println();
@@ -291,7 +285,6 @@ void loop() {
   
   while(1);
   
-  }
 }
    
 
