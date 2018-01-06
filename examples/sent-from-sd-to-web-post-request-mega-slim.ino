@@ -21,7 +21,7 @@
 #include <SysCall.h> 
 
 #define ERRORLED 3
-#define SUCCESSLED 5
+#define SUCCESSLED 2
 #define INFOLED 6
 
 
@@ -57,9 +57,10 @@ void setup() {
   pinMode(10, OUTPUT);
   
   starting(ERRORLED,SUCCESSLED,INFOLED);
+  delay(1000);
   stoping(ERRORLED,SUCCESSLED,INFOLED);
-  waiting(SUCCESSLED,ERRORLED,10);
-  stoping(ERRORLED,SUCCESSLED,INFOLED);
+  delay(1000);
+  waiting(SUCCESSLED,ERRORLED,200);
   
   // Set console baud rate
   //SerialDEBUG.begin(115200);
@@ -87,14 +88,14 @@ void setup() {
   //SerialDEBUG.println("Done");
   flash(SUCCESSLED,1,100,100);
   
-  waiting(SUCCESSLED,ERRORLED,10);
+  waiting(SUCCESSLED,ERRORLED,200);
 
   //SerialDEBUG.print("Restarting modem...");
   
   if (!modem.restart()) {
       //SerialDEBUG.print("Failed");
       flash(ERRORLED,1,100,100);
-      analogWrite(ERRORLED, 255);
+      digitalWrite(ERRORLED, HIGH);
       delay(2000);
       return;
     }
@@ -109,13 +110,15 @@ void setup() {
 
   // Unlock your SIM card with a PIN
   //modem.simUnlock("1234");
+
 }
 
 void loop() {
+
   //SerialDEBUG.listen();
   //SerialDEBUG.println("Turn off 1-st arduino");
 
-  waiting(SUCCESSLED,ERRORLED,10);
+  waiting(SUCCESSLED,ERRORLED,200);
   
   //turn off 1-st arduino
   
@@ -129,7 +132,7 @@ void loop() {
   // don't do anything more:
   //SerialDEBUG.println(F("Failed"));
   flash(ERRORLED,1,100,100);
-  analogWrite(ERRORLED, 255);
+  digitalWrite(ERRORLED, HIGH);
   delay(2000);
   return;
   }
@@ -144,7 +147,7 @@ void loop() {
   if (!daily_file) {
     //SerialDEBUG.print("The text file.txt file cannot be opened");
     flash(ERRORLED,2,100,100);
-    analogWrite(ERRORLED, 255);
+    digitalWrite(ERRORLED, HIGH);
     delay(2000);
     return;
   }
@@ -154,11 +157,11 @@ void loop() {
 
   //Connect gprs
   //SerialDEBUG.print(F("Waiting for network..."));
-  waiting(SUCCESSLED,ERRORLED,10);
+  waiting(SUCCESSLED,ERRORLED,200);
   if (!modem.waitForNetwork()) {
     //SerialDEBUG.println("Failed");
       flash(ERRORLED,3,100,100);
-      analogWrite(ERRORLED, 255);
+      digitalWrite(ERRORLED, HIGH);
       delay(2000);
       return;
   }
@@ -169,11 +172,11 @@ void loop() {
   //SerialDEBUG.print(F("Connecting to "));
   //SerialDEBUG.print(apn);
   //SerialDEBUG.print("...");
-  waiting(SUCCESSLED,ERRORLED,10);
+  waiting(SUCCESSLED,ERRORLED,200);
   if (!modem.gprsConnect(apn, user, pass)) {
      //SerialDEBUG.println(" fail");
       flash(ERRORLED,4,100,100);
-      analogWrite(ERRORLED, 255);
+      digitalWrite(ERRORLED, HIGH);
       delay(2000);
       return;
   }
@@ -184,11 +187,11 @@ void loop() {
   //SerialDEBUG.print(F("Connecting to "));
   //SerialDEBUG.print(server);
   //SerialDEBUG.print("...");
-  waiting(SUCCESSLED,ERRORLED,10);
+  waiting(SUCCESSLED,ERRORLED,200);
   if (!client.connect(server, port)) {
       //SerialDEBUG.println(" fail");
       flash(ERRORLED,5,100,100);
-      analogWrite(ERRORLED, 255);
+      digitalWrite(ERRORLED, HIGH);
       delay(2000);
     return;
   }
@@ -230,13 +233,14 @@ void loop() {
       // Create massive available data  
       int i;
       i=0;
+      stoping(ERRORLED,SUCCESSLED,INFOLED);
       while (client.available()) {
         char c = client.read();
         a[i]= c;
         i++;        
         timeout = millis();
-        analogWrite(SUCCESSLED, i);
-       
+        digitalWrite(INFOLED, HIGH);
+               
     }
     
     }
@@ -245,16 +249,18 @@ void loop() {
     
     if(status_code.equals(HTTP_OK_STATUS)) { 
       //SerialDEBUG.println("Succesufuly write data to influx!"); 
-      analogWrite(SUCCESSLED, 255);
-      analogWrite(ERRORLED, 0);
-      analogWrite(INFOLED, 255); 
-      delay(1000);    
+      digitalWrite(SUCCESSLED, HIGH);
+      digitalWrite(ERRORLED, HIGH);
+      digitalWrite(INFOLED, LOW); 
+      delay(2000);    
     }
     else { 
       //SerialDEBUG.println("Not Succesufuly write data to influx!");
       //SerialDEBUG.println(a);
       flash(ERRORLED,5,100,100);
-      analogWrite(ERRORLED, 255);
+      digitalWrite(ERRORLED, HIGH);
+      digitalWrite(INFOLED, HIGH);
+      digitalWrite(SUCCESSLED, LOW);
       delay(2000);
       return;
     }
@@ -296,9 +302,9 @@ void flash (char led, char count, unsigned short interval, unsigned short pause)
   pinMode(led, OUTPUT);
   
   for (i=0; i < count; i++) {
-      analogWrite(led, 255);
+      digitalWrite(led, HIGH);
       delay(interval);
-      analogWrite(led, 0);
+      digitalWrite(led, LOW);
       delay(pause);     
     }
   
@@ -311,9 +317,9 @@ void stoping (int led1,int led2, int led3)
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   pinMode(led3, OUTPUT);
-  analogWrite(led1, 0);
-  analogWrite(led2, 0);
-  analogWrite(led3, 0);
+  digitalWrite(led1, LOW);
+  digitalWrite(led2, LOW);
+  digitalWrite(led3, LOW);
     
 }
 
@@ -322,37 +328,27 @@ void starting (int led1,int led2,int led3)
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   pinMode(led3, OUTPUT);
-  analogWrite(led1, 255);
-  analogWrite(led2, 255);
-  analogWrite(led3, 255);
+  digitalWrite(led1, HIGH);
+  digitalWrite(led2, HIGH);
+  digitalWrite(led3, HIGH);
     
 }
 
-void waiting (int led1,int led2, unsigned short interval) { 
-  fadein(led1,interval);
-  fadein(led2,interval);
-  fadeout(led1,interval);
-  fadeout(led2,interval);
-
-}
-
-void fadein (int led, unsigned short interval) {
-
-  pinMode(led, OUTPUT);  
-  for (int i=0; i<255; i++) {
-    analogWrite(led, i);
-    delay (interval);
-  }
+void waiting (char led1,char led2, unsigned short interval)
+{ 
+  char i;
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  for (i=0; i < 10; i++) {
+      digitalWrite(led1, HIGH);
+      digitalWrite(led2, HIGH);
+      delay(interval);
+      digitalWrite(led1, LOW);
+      digitalWrite(led2, LOW);
+    
+    }
   
-}
-
-void fadeout (int led, unsigned short interval) {
-  pinMode(led, OUTPUT);
-  for (int i=255; i>=0; i--) {
-    analogWrite(led, i);
-    delay (interval);
+ 
   }
-  
-}
 
   
