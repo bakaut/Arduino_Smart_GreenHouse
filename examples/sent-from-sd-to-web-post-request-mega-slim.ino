@@ -20,6 +20,11 @@
 #include <SdFatConfig.h>
 #include <SysCall.h> 
 
+#define ERRORLED 3
+#define SUCCESSLED 5
+#define INFOLED 6
+
+
 // Your GPRS credentials
 // Leave empty, if missing user or pass
 const char apn[]  = "internet.mts.ru";
@@ -32,7 +37,7 @@ File daily_file;
 // Use Hardware Serial on Mega, Leonardo, Micro
 
 //#define SerialDEBUG Serial
-#define SerialAT Serial1
+#define SerialAT Serial
 
 TinyGsm modem(SerialAT);
 TinyGsmClient client(modem);
@@ -40,7 +45,7 @@ TinyGsmClient client(modem);
 const char server[] = "169.51.23.245";
 const char resource[] = "/write?db=weather";
 const int port = 30000;
-const int chipSelect = 53;
+const int chipSelect = 10;
 String data_string,status_code;
 
 
@@ -49,7 +54,12 @@ void setup() {
   pinMode(8, OUTPUT);
   pinMode(9, OUTPUT);
   pinMode(7, OUTPUT);
-  pinMode(53, OUTPUT);
+  pinMode(10, OUTPUT);
+  
+  starting(ERRORLED,SUCCESSLED,INFOLED);
+  stoping(ERRORLED,SUCCESSLED,INFOLED);
+  waiting(SUCCESSLED,ERRORLED,10);
+  stoping(ERRORLED,SUCCESSLED,INFOLED);
   
   // Set console baud rate
   //SerialDEBUG.begin(115200);
@@ -65,7 +75,7 @@ void setup() {
   //SerialDEBUG.print("Turn on power gprs shild via mosfet...");
   digitalWrite(9, HIGH);
   //SerialDEBUG.println("Done");
-  flash(A6,1,100,100);
+  flash(SUCCESSLED,1,100,100);
 
   //power on gsm-gprs shild
   //SerialDEBUG.print("Power on gsm-gprs shild...");
@@ -75,23 +85,23 @@ void setup() {
   digitalWrite(7, LOW);
   delay(500);
   //SerialDEBUG.println("Done");
-  flash(A6,1,100,100);
+  flash(SUCCESSLED,1,100,100);
   
-  waiting(5,6,10);
+  waiting(SUCCESSLED,ERRORLED,10);
 
   //SerialDEBUG.print("Restarting modem...");
   
   if (!modem.restart()) {
       //SerialDEBUG.print("Failed");
-      flash(A5,1,100,100);
-      digitalWrite(3, HIGH);
+      flash(ERRORLED,1,100,100);
+      analogWrite(ERRORLED, 255);
       delay(2000);
       return;
     }
 
 
   //SerialDEBUG.println("OK");
-  flash(A6,1,100,100);
+  flash(SUCCESSLED,1,100,100);
 
 //  String modemInfo = modem.getModemInfo();
   //Serial.print("Modem: ");
@@ -105,7 +115,7 @@ void loop() {
   //SerialDEBUG.listen();
   //SerialDEBUG.println("Turn off 1-st arduino");
 
-  waiting(5,6,10);
+  waiting(SUCCESSLED,ERRORLED,10);
   
   //turn off 1-st arduino
   
@@ -118,14 +128,14 @@ void loop() {
   if (!SD.begin(chipSelect)) {
   // don't do anything more:
   //SerialDEBUG.println(F("Failed"));
-  flash(A5,1,100,100);
-  analogWrite(A5, 255);
+  flash(ERRORLED,1,100,100);
+  analogWrite(ERRORLED, 255);
   delay(2000);
   return;
   }
   //SerialDEBUG.println("Done");
   
-  flash(A6,2,100,100);
+  flash(SUCCESSLED,2,100,100);
   
   //SerialDEBUG.print("Open text file...");
   
@@ -133,58 +143,58 @@ void loop() {
   
   if (!daily_file) {
     //SerialDEBUG.print("The text file.txt file cannot be opened");
-    flash(A5,2,100,100);
-    analogWrite(A5, 255);
+    flash(ERRORLED,2,100,100);
+    analogWrite(ERRORLED, 255);
     delay(2000);
     return;
   }
   //SerialDEBUG.println("Done");
-  flash(A6,2,100,100);
+  flash(SUCCESSLED,2,100,100);
 
 
   //Connect gprs
   //SerialDEBUG.print(F("Waiting for network..."));
-  waiting(5,6,10);
+  waiting(SUCCESSLED,ERRORLED,10);
   if (!modem.waitForNetwork()) {
     //SerialDEBUG.println("Failed");
-      flash(A5,3,100,100);
-      analogWrite(A5, 255);
+      flash(ERRORLED,3,100,100);
+      analogWrite(ERRORLED, 255);
       delay(2000);
       return;
   }
-   stoping(A6,A5,A4);
+   stoping(ERRORLED,SUCCESSLED,INFOLED);
    //SerialDEBUG.println(" OK");
-   flash(A6,3,100,100);
+   flash(SUCCESSLED,3,100,100);
 
   //SerialDEBUG.print(F("Connecting to "));
   //SerialDEBUG.print(apn);
   //SerialDEBUG.print("...");
-  waiting(5,6,10);
+  waiting(SUCCESSLED,ERRORLED,10);
   if (!modem.gprsConnect(apn, user, pass)) {
      //SerialDEBUG.println(" fail");
-      flash(A5,4,100,100);
-      analogWrite(A5, 255);
+      flash(ERRORLED,4,100,100);
+      analogWrite(ERRORLED, 255);
       delay(2000);
       return;
   }
-  stoping(A6,A5,A4);
+  stoping(ERRORLED,SUCCESSLED,INFOLED);
   //SerialDEBUG.println(" OK");
-  flash(A6,4,100,100);
+  flash(SUCCESSLED,4,100,100);
 
   //SerialDEBUG.print(F("Connecting to "));
   //SerialDEBUG.print(server);
   //SerialDEBUG.print("...");
-  waiting(5,6,10);
+  waiting(SUCCESSLED,ERRORLED,10);
   if (!client.connect(server, port)) {
       //SerialDEBUG.println(" fail");
-      flash(A5,5,100,100);
-      analogWrite(A5, 255);
+      flash(ERRORLED,5,100,100);
+      analogWrite(ERRORLED, 255);
       delay(2000);
     return;
   }
-  stoping(A6,A5,A4);
+  stoping(ERRORLED,SUCCESSLED,INFOLED);
   //SerialDEBUG.println(" OK");
-  flash(A6,5,100,100);
+  flash(SUCCESSLED,5,100,100);
   //SerialDEBUG.print(F("Read txt file line by line and send data to web server: "));
   
   //Read only last 144 (24*6) lines (data for a last day)
@@ -200,7 +210,7 @@ void loop() {
     //SerialDEBUG.println("Readed line: ");
     //SerialDEBUG.println(data_string); //Printing for debugging purpose         
     // Make a HTTP POST request:
-    starting(6,5,4);
+    starting(ERRORLED,SUCCESSLED,INFOLED);
 
     //SerialDEBUG.println("Create and send post request: ");
     //SerialDEBUG.println("POST " + String (resource) + " HTTP/1.1\r\nHost: "+ String (server) + "\r\nContent-Type: application/x-www-form-urlencoded\r\nContent-Length:" + String (data_string.length()) +"\r\n\r\n"+ String (data_string));
@@ -225,7 +235,7 @@ void loop() {
         a[i]= c;
         i++;        
         timeout = millis();
-        analogWrite(6, i);
+        analogWrite(SUCCESSLED, i);
        
     }
     
@@ -235,31 +245,31 @@ void loop() {
     
     if(status_code.equals(HTTP_OK_STATUS)) { 
       //SerialDEBUG.println("Succesufuly write data to influx!"); 
-      analogWrite(A6, 255);
-      analogWrite(A5, 0);
-      analogWrite(A4, 255); 
+      analogWrite(SUCCESSLED, 255);
+      analogWrite(ERRORLED, 0);
+      analogWrite(INFOLED, 255); 
       delay(1000);    
     }
     else { 
       //SerialDEBUG.println("Not Succesufuly write data to influx!");
       //SerialDEBUG.println(a);
-      flash(A5,5,100,100);
-      analogWrite(A5, 255);
+      flash(ERRORLED,5,100,100);
+      analogWrite(ERRORLED, 255);
       delay(2000);
       return;
     }
     
-    stoping(A6,A5,A4);
+    stoping(ERRORLED,SUCCESSLED,INFOLED);
   }
 
   client.stop();
   //SerialDEBUG.println("Server disconnected");
-  flash(A6,1,100,100);
+  flash(SUCCESSLED,1,100,100);
 
   modem.gprsDisconnect();
   //SerialDEBUG.println("GPRS disconnected");
 
-  flash(A6,1,100,100);
+  flash(SUCCESSLED,1,100,100);
 
 
   //turn on 1-st arduino
