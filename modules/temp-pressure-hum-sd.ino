@@ -20,7 +20,7 @@
 #define PAUSE 500
 
 const int chipSelect = 10;
-File myFile,daily_file;
+File myFile,daily_file,one_file;
 
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
 unsigned long sumX, sumY, sumX2, sumXY;
@@ -148,11 +148,24 @@ void loop() {
         // close the file:
         daily_file.close();        
         }
+      
+      one_file = SD.open("current.txt", FILE_WRITE);
+      delay(20);
+      
+      if (one_file) {
+        one_file.println(check_data);
+        // close the file:
+        one_file.close();        
+        }
       else {
         blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
         return;
         }
-      
+        
+      if ( tm.Hour == 23 and tm.Minute == 23 ) {
+        SD.remove("current.txt");        
+        }
+        
       //turn off power via mosfet
       delay(2000);
       digitalWrite(5, LOW);
@@ -163,6 +176,8 @@ void loop() {
       blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
       return;
     }
+
+   
   
   }
 
@@ -192,3 +207,5 @@ void flash (char led, unsigned short interval, unsigned short pause)
   digitalWrite(led, LOW);
   delay(pause);  
   }
+
+
