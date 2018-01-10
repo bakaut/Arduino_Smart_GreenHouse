@@ -15,8 +15,11 @@
 #define TINY_GSM_MODEM_A7
 //#define DEBUGMODE
 //#define LEDDEBUG
-#define MEGA
-//#define NANO
+//#define MEGA
+#define NANO
+#define OLED
+
+
 #define SMS_TARGET "+79219614704"
 
 
@@ -39,16 +42,21 @@ const char pass[] = "mts";
 
 const String HTTP_OK_STATUS="204"; //https://docs.influxdata.com/influxdb/v1.4/tools/api/#status-codes-and-responses-2
 
-
+#if defined LEDDEBUG
 const uint8_t ERRORLED=3;
 const uint8_t INFOLED=6;
-const uint8_t SUCCESSLED=13;
+const uint8_t SUCCESSLED=4;
+#endif
+
+#if defined OLED
+#include <Adafruit_SSD1306.h>
+Adafruit_SSD1306 display(4);
+#endif
+
 #if defined MEGA
 const uint8_t chipSelect = 53;
 #endif
 #if defined NANO
-#include <SoftwareSerial.h>
-SoftwareSerial SIM900A(3,2); // RX | TX
 const uint8_t chipSelect = 10;
 #endif
 const uint8_t turn_on_gsm = 9;
@@ -67,9 +75,9 @@ File daily_file;
 #define SerialAT Serial1
 #endif
 #if defined NANO
-//#include <SoftwareSerial.h>
+#include <SoftwareSerial.h>
 //SoftwareSerial SerialAT(3,2); // RX | TX
-#define SerialAT Serial//in my case i cant let software serial work for nano. And I use hardware serial
+#define SerialAT Serial//in my case i cant let software serial work. And I use hardware serial
 #endif
 
 
@@ -85,13 +93,22 @@ String data_string,status_code,response;
 
 void setup() {
 
+  #if defined OLED
+    display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
+    display.display();
+    delay(2000);
+    display.clearDisplay();
+  #endif
+
   pinMode(turn_1_arduino, OUTPUT);
   pinMode(turn_on_gsm, OUTPUT);
   pinMode(gsm_power_btn, OUTPUT);
   pinMode(chipSelect, OUTPUT);
+  #if defined LEDDEBUG
   pinMode(SUCCESSLED, OUTPUT);
   pinMode(INFOLED, OUTPUT);
   pinMode(ERRORLED, OUTPUT);
+  #endif
 
   #if defined DEBUGMODE
   SerialDEBUG.begin(115200);
@@ -125,7 +142,7 @@ void setup() {
   #endif
 
   //Restarting gsm modem
-  startAndControl ("Restarting modem...", modem.restart(), 1);
+  //startAndControl ("Restarting modem...", modem.restart(), 1);
   
   //String modemInfo = modem.getModemInfo();
   //SerialDEBUG.print("Modem: ");
@@ -169,6 +186,9 @@ void loop() {
   daily_file.seek(daily_file.size()-15676); 
 
   while (daily_file.available()) {
+    #if defined OLED
+        ToOledPrint("Entered read file and send cicle");
+    #endif
 
     data_string = daily_file.readStringUntil('\n');
     data_string = daily_file.readStringUntil('\n');
@@ -181,6 +201,10 @@ void loop() {
     // Make a HTTP POST request:
     #if defined LEDDEBUG
     setled(ERRORLED,1,INFOLED,1,SUCCESSLED,1);
+    #endif
+    
+    #if defined OLED
+        ToOledPrint("Make a HTTP POST request");
     #endif
     
     #if defined DEBUGMODE
@@ -215,6 +239,9 @@ void loop() {
     }
 
     response.trim();
+    #if defined OLED
+        ToOledPrint(response);
+    #endif
     status_code=String(a[9])+String(a[10])+String(a[11]);
     //modem.sendSMS(SMS_TARGET, status_code);
     
@@ -222,7 +249,7 @@ void loop() {
       #if defined DEBUGMODE
       SerialDEBUG.println("Succesufuly write data to influx!"); 
       #endif
-      //startAndControl ("Sending sms error request...", modem.sendSMS(SMS_TARGET, status_code+String(millis())), 1);
+      startAndControl ("Sending sms error request...", modem.sendSMS(SMS_TARGET, status_code+String(millis())), 1);
       #if defined LEDDEBUG
       successFlash(SUCCESSLED,7);
       #endif
@@ -274,7 +301,9 @@ void loop() {
   #if defined DEBUGMODE
   SerialDEBUG.println("turn off power gprs shild via mosfet");
   #endif
+  #if defined LEDDEBUG
   setled(ERRORLED,0,INFOLED,1,SUCCESSLED,1);
+  #endif
   
   //sleep for a 24 hour //turn off sd card pins
   #if defined DEBUGMODE
@@ -285,7 +314,7 @@ void loop() {
 }
    
 
-
+#if defined LEDDEBUG
 void flash (uint8_t led, uint8_t count, unsigned short interval, unsigned short pause)
 { 
   uint8_t  i;
@@ -310,7 +339,7 @@ void setled (uint8_t led1,uint8_t state1,uint8_t led2,uint8_t state2,uint8_t led
 }
 
 void errorFlash (uint8_t errorled, uint8_t count)
-{
+{   
     flash(errorled,count,100,100);
     digitalWrite(errorled, HIGH);
     delay(2000);
@@ -327,7 +356,7 @@ void infoFlash (uint8_t infoled, uint8_t count)
     flash(infoled,count,70,70);
     delay(100);
 }
-
+#endif
 
 void startAndControl (String message,boolean command,uint8_t count) {
   #if defined DEBUGMODE
@@ -345,6 +374,9 @@ void startAndControl (String message,boolean command,uint8_t count) {
         #if defined LEDDEBUG
         errorFlash(ERRORLED,count);
         #endif
+        #if defined OLED
+        ToOledPrint(message+String("..Faled"));
+        #endif
         return;
        }
     else {
@@ -355,7 +387,20 @@ void startAndControl (String message,boolean command,uint8_t count) {
       #if defined DEBUGMODE
       SerialDEBUG.println("OK");
       #endif
+      #if defined OLED
+      ToOledPrint("OK");
+      #endif
       } 
    }
   }
+#if defined OLED
+  void ToOledPrint(String text) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.println(text);
+  display.display();   
+}
+#endif
   
