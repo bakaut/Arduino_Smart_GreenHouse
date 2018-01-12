@@ -157,26 +157,23 @@ void loop() {
         // close the file:
         one_file.close();        
         }
-      else {
-        blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
-        return;
-        }
+
         
       if ( tm.Hour == 23 and tm.Minute == 23 ) {
         SD.remove("current.txt");        
         }
         
-      //turn off power via mosfet
-      delay(2000);
-      digitalWrite(5, LOW);
-      delay(600000);
-
-    } else {
+    }
+    
+     else {
       // if the file didn't open, print an error:
       blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
       return;
     }
-
+      //turn off power via mosfet
+      delay(2000);
+      digitalWrite(5, LOW);
+      delay(600000);
    
   
   }
