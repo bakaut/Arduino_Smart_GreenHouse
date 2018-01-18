@@ -2,7 +2,7 @@
 /**************************************************************
  Author: Lebedev Nikolay
  Date created: 25-12-2017
- Date modufided: 10-01-2018
+ Date modufided: 18-01-2018
 
  Description:
  Read data from sd card (influx db line protocol) and send last 144 lines from text file to influx server via http post request.(gprs shild AI thinker A7)
@@ -13,10 +13,11 @@
  **************************************************************/
 
 #define TINY_GSM_MODEM_A7
+//#define TINY_GSM_MODEM_M590
 //#define DEBUGMODE
 //#define LEDDEBUG
-//#define MEGA
-#define NANO
+#define MEGA
+//#define NANO
 #define OLED
 
 
@@ -75,9 +76,9 @@ File daily_file;
 #define SerialAT Serial1
 #endif
 #if defined NANO
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
 //SoftwareSerial SerialAT(3,2); // RX | TX
-#define SerialAT Serial//in my case i cant let software serial work. And I use hardware serial
+#define SerialAT Serial //in my case i cant let software serial work. And I use hardware serial
 #endif
 
 
@@ -124,14 +125,23 @@ void setup() {
   #if defined DEBUGMODE
   SerialDEBUG.print("Turn on power gprs shild via mosfet...");
   #endif
+  #if defined OLED
+  ToOledPrint("Turn on power gprs shild via mosfet...\r\n");
+  #endif
   digitalWrite(turn_on_gsm, HIGH);
   #if defined DEBUGMODE
   SerialDEBUG.println("Done");
+  #endif
+  #if defined OLED
+  ToOledPrint("Done");
   #endif
  
   //power on gsm-gprs shild
   #if defined DEBUGMODE
   SerialDEBUG.print("Power on gsm-gprs shild...");
+  #endif
+  #if defined OLED
+  ToOledPrint("Power on gsm-gprs shild...\r\n");
   #endif
   digitalWrite(gsm_power_btn, HIGH);
   delay(2500);
@@ -140,9 +150,12 @@ void setup() {
   #if defined DEBUGMODE
   SerialDEBUG.println("Done");
   #endif
+  #if defined OLED
+  ToOledPrint("Done");
+  #endif
 
   //Restarting gsm modem
-  //startAndControl ("Restarting modem...", modem.restart(), 1);
+  startAndControl ("Restarting modem...", modem.restart(), 1);
   
   //String modemInfo = modem.getModemInfo();
   //SerialDEBUG.print("Modem: ");
@@ -360,7 +373,10 @@ void infoFlash (uint8_t infoled, uint8_t count)
 
 void startAndControl (String message,boolean command,uint8_t count) {
   #if defined DEBUGMODE
-  SerialDEBUG.print(message);
+  SerialDEBUG.print(message+"\r\n");
+  #endif
+  #if defined OLED
+  ToOledPrint(message+"\r\n");
   #endif
   boolean state = true;
   while (state) {
@@ -369,13 +385,13 @@ void startAndControl (String message,boolean command,uint8_t count) {
     #endif
     if (!command) {
         #if defined DEBUGMODE
-        SerialDEBUG.print("Failed\r\n");
+        SerialDEBUG.print("Failed");
         #endif
         #if defined LEDDEBUG
         errorFlash(ERRORLED,count);
         #endif
         #if defined OLED
-        ToOledPrint(message+String("..Faled"));
+        ToOledPrint("Failed");
         #endif
         return;
        }
