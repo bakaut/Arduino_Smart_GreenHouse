@@ -157,11 +157,6 @@ void loop() {
         // close the file:
         one_file.close();        
         }
-
-        
-      if ( tm.Hour == 23 and tm.Minute == 23 ) {
-        SD.remove("current.txt");        
-        }
         
     }
     
@@ -170,6 +165,9 @@ void loop() {
       blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
       return;
     }
+	if ( tm.Hour == 23 and tm.Minute > 49 ) {
+	SD.remove("current.txt");        
+	}
       //turn off power via mosfet
       delay(2000);
       digitalWrite(5, LOW);
@@ -204,5 +202,4 @@ void flash (char led, unsigned short interval, unsigned short pause)
   digitalWrite(led, LOW);
   delay(pause);  
   }
-
 
