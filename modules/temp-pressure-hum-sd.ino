@@ -3,7 +3,6 @@
 #include <DS1307RTC.h>
 #include <Wire.h>
 #include "DHT.h"
-//#include <SD.h>
 #include <SPI.h>
 #include <Adafruit_BMP085.h>
 
@@ -19,37 +18,88 @@
 #define MAXI 700
 #define PAUSE 500
 
-const int chipSelect = 10;
+#define DEBUGMODE
+
+//Serial port for logging. Use Hardware Serial  on Mega, or software serial for Nano
+#if defined DEBUGMODE
+#define SerialDEBUG Serial
+#endif
+
+/*Список, что переделат
+
+Все переменные.
+*/
+
+const uint8_t SD_SC = 10; //SD card 
+const uint8_t POWER_SWITCH = 5; //Turn on or turn off all sensor power via mosfet transistor
+const uint8_t INFO_LED = 13;
+
+
 File myFile,daily_file,one_file;
 
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
 unsigned long sumX, sumY, sumX2, sumXY;
 int delta,current_day;
 float a;
-String check_data;
+String check_data; //all sensor data in inflife line protocol
 
 
-// Инициализируем датчик температуры и влажности
+//Датчик температуры и влажности
 DHT dht(DHTPIN, DHT22);
-
-//Инициализируем датчик давления
+//Датчик давления
 Adafruit_BMP085 bmp;
+//SD Карта
+SdFat SD;
+//Часы. Tyny RTC clock
+tmElements_t tm;
 
 
 void setup() {
+
+  #if defined DEBUGMODE
+  SerialDEBUG.begin(9600);
+  delay(100);
+  #endif
+
   //Включаем питание датчиков через транзистор
-  pinMode(5, OUTPUT);
-  digitalWrite(5, HIGH);
-  delay(1000);
+  pinMode(POWER_SWITCH, OUTPUT);
   
+  #if defined DEBUGMODE
+  SerialDEBUG.print("Turn on power control via mosfet...");
+  #endif
+
+  digitalWrite(POWER_SWITCH, HIGH);
+  delay(100);
+
+  #if defined DEBUGMODE
+  SerialDEBUG.println("Done");
+  #endif
+
+
   //Включаем датчик температуры и влажности
+  
+  //startAndControl ("Turn on temp and humanity sensor...", dht.begin(), 1);
+
+  #if defined DEBUGMODE
+  SerialDEBUG.print("Turn on temp and humanity sensor...");
+  #endif
   dht.begin();
+  #if defined DEBUGMODE
+  SerialDEBUG.println("Done");
+  #endif
+
 
   //Включаем датчик давления
-  if (!bmp.begin()) {
-   blinking(13,MINI,MINI,MINI,MAXI,PAUSE);
-   return;
-  }
+
+  //startAndControl ("Turn on pressure sensor...", bmp.begin(), 1);
+  #if defined DEBUGMODE
+  SerialDEBUG.print("Turn on pressure sensor...");
+  #endif
+  bmp.begin();
+
+  #if defined DEBUGMODE
+  SerialDEBUG.println("Done");
+  #endif
   
   pressure = aver_sens();          // найти текущее давление по среднему арифметическому
   for (byte i = 0; i < 6; i++) {   // счётчик от 0 до 5
@@ -60,27 +110,35 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(5, HIGH);
+
+  #if defined DEBUGMODE
+  SerialDEBUG.print("Turn on power control via mosfet...");
+  #endif
+
+  digitalWrite(POWER_SWITCH, HIGH);
   delay(500);
-  SdFat SD;
-    if (!SD.begin(chipSelect)) {
-    blinking(13,MINI,MINI,MAXI,MAXI,PAUSE);
-  // don't do anything more:
-  return;
-  }
+
+  #if defined DEBUGMODE
+  SerialDEBUG.println("Done");
+  #endif
+
+  startAndControl ("Initializing sd...", SD.begin(SD_SC), 2);
+
+ //   if (!SD.begin(SD_SC)) {
+ //   blinking(INFO_LED,MINI,MINI,MAXI,MAXI,PAUSE);
+ // return;
+ // }
+
   bmp.readTemperature();  
-  //bmp.readAltitude();
-  //bmp.readAltitude(100550);//109194 for 731 meter
-  
+
   delay(200);
   
-  tmElements_t tm;
   
   if (RTC.read(tm)) {
     delay(700);
     }
   else {
-    blinking(13,MINI,MAXI,MAXI,MAXI,PAUSE);
+    blinking(INFO_LED,MINI,MAXI,MAXI,MAXI,PAUSE);
     return;
     } 
   current_day = tm.Day;
@@ -99,7 +157,7 @@ void loop() {
   
   if (isnan(h) && isnan(t)&& isnan(p)) {
   
-  blinking(13,MAXI,MAXI,MAXI,MAXI,PAUSE);
+  blinking(INFO_LED,MAXI,MAXI,MAXI,MAXI,PAUSE);
   return;
   
   }
@@ -162,15 +220,15 @@ void loop() {
     
      else {
       // if the file didn't open, print an error:
-      blinking(13,MAXI,MAXI,MAXI,MAXI,5000);
+      blinking(INFO_LED,MAXI,MAXI,MAXI,MAXI,5000);
       return;
     }
-	if ( tm.Hour == 23 and tm.Minute > 49 ) {
-	SD.remove("current.txt");        
-	}
+  if ( tm.Hour == 23 and tm.Minute > 49 ) {
+  SD.remove("current.txt");        
+  }
       //turn off power via mosfet
       delay(2000);
-      digitalWrite(5, LOW);
+      digitalWrite(POWER_SWITCH, LOW);
       delay(600000);
    
   
@@ -203,3 +261,23 @@ void flash (char led, unsigned short interval, unsigned short pause)
   delay(pause);  
   }
 
+void startAndControl (String message,boolean command,uint8_t count) {
+  #if defined DEBUGMODE
+  SerialDEBUG.print(message);
+  #endif
+  boolean state = true;
+  while (state) {
+    if (!command) {
+        #if defined DEBUGMODE
+        SerialDEBUG.println("Failed");
+        #endif
+        return;
+       }
+    else {
+      state = false;
+      #if defined DEBUGMODE
+      SerialDEBUG.println("OK");
+      #endif
+      } 
+   }
+  } 
