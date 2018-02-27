@@ -19,8 +19,8 @@
 #define PAUSE 500
 
 
-#define DEBUGMODE
-//#define LEDDEBUG
+//#define DEBUGMODE
+#define LEDDEBUG
 
 //Serial port for logging. Use Hardware Serial  on Mega, or software serial for Nano
 #if defined DEBUGMODE
@@ -38,6 +38,8 @@ unsigned long sumX, sumY, sumX2, sumXY;
 int delta,current_day;
 float a,h,t,p;
 String check_data; //all sensor data in inflife line protocol
+String all_data = "file.txt", current_data = "current.txt", current_day_file;
+File all_data_file, current_data_file, current_day_file_file;
 
 
 //Датчик температуры и влажности
@@ -98,6 +100,7 @@ void loop() {
   startAndControl ("Read date time...", RTC.read(tm), 4);
   delay(700);
   current_day = tm.Day;
+  current_day_file = String (current_day);
    
   //Считываем влажность, температуру. давление
   h = dht.readHumidity();
@@ -134,11 +137,11 @@ void loop() {
   
   check_data = "weather,location=uglovo,region=aerodrom temp="+String (t)+",hum="+String (h)+",pressure="+String (p)+",delta="+String (delta)+" "+String (makeTime(tm))+"000000000";
   
-  write_to_sd ("file.txt", check_data, 9);
+  write_to_sd (all_data, all_data_file, check_data, 9);
 
-  write_to_sd (String (current_day), check_data, 10);
+  write_to_sd (current_day_file, current_data_file, check_data, 10);
   
-  write_to_sd ("current.txt", check_data, 11);
+  write_to_sd (current_data, current_day_file_file, check_data, 11);
 
   if ( tm.Hour == 23 and tm.Minute > 30 ) {
     startAndControl ("Remove current day file...", SD.remove("current.txt"), 12);
@@ -148,7 +151,7 @@ void loop() {
   //turn off power via mosfet
   delay(2000);
   digitalWrite(POWER_SWITCH, LOW);
-  delay(5000);
+  delay(600000);
    
   
   }
@@ -219,14 +222,14 @@ void errorFlash (uint8_t errorled, uint8_t count)
     digitalWrite(errorled, LOW);
   }
 
-void write_to_sd (String filename, String check_data, uint8_t count) {
-  File open_filename;
-  startAndControl ("Open file..." + String (filename), open_filename = SD.open(String (filename), FILE_WRITE), count);
+void write_to_sd (String filename, File file_var, String check_data, uint8_t count) {
+
+  startAndControl ("Open file..." + filename, file_var = SD.open(filename, FILE_WRITE), count);
   delay(20);
 
-  if(open_filename) {
-    open_filename.println(check_data);
-    open_filename.close();        
+  if(file_var) {
+    file_var.println(check_data);
+    file_var.close();        
   }
 
   else {
