@@ -143,7 +143,7 @@ void loop() {
   
   write_to_sd (current_data, current_day_file_file, check_data, 11);
 
-  if ( tm.Hour == 23 and tm.Minute > 30 ) {
+  if ( tm.Hour == 23 and tm.Minute >45 ) {
     startAndControl ("Remove current day file...", SD.remove("current.txt"), 12);
      
   }
@@ -151,7 +151,7 @@ void loop() {
   //turn off power via mosfet
   delay(2000);
   digitalWrite(POWER_SWITCH, LOW);
-  delay(600000);
+  delay(2000);
    
   
   }
@@ -168,22 +168,24 @@ long aver_sens() {
 
 
 void flash (char led, unsigned short interval, unsigned short pause)
-{
+{ while(1){
   digitalWrite(led, HIGH);
   delay(interval);
   digitalWrite(led, LOW);
-  delay(pause);  
+  delay(pause); 
+}
+ 
   }
 
 void startAndControl (String message,boolean command,uint8_t count) {
   #if defined DEBUGMODE
-  SerialDEBUG.print(message);
+  SerialDEBUG.print(message+"\r\n");
   #endif
   boolean state = true;
   while (state) {
     if (!command) {
         #if defined DEBUGMODE
-        SerialDEBUG.println("Failed");
+        SerialDEBUG.println(" Failed");
         #endif
         #if defined LEDDEBUG
           errorFlash(ERRORLED,count);        
@@ -193,7 +195,7 @@ void startAndControl (String message,boolean command,uint8_t count) {
     else {
       state = false;
       #if defined DEBUGMODE
-      SerialDEBUG.println("OK");
+      SerialDEBUG.println(" OK");
       #endif
       } 
    }
@@ -233,11 +235,12 @@ void write_to_sd (String filename, File file_var, String check_data, uint8_t cou
   }
 
   else {
+    file_var.close();
     #if defined LEDDEBUG
       errorFlash(ERRORLED,count);        
     #endif
     #if defined DEBUGMODE
-      SerialDEBUG.println("Cannot writo to file"+String(filename));
+      SerialDEBUG.println("Cannot write to file "+String(filename));
     #endif
     return; 
   }
