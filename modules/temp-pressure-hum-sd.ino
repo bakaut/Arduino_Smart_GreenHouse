@@ -30,7 +30,13 @@
 
 const uint8_t SD_SC = 10; //SD card 
 const uint8_t POWER_SWITCH = 5; //Turn on or turn off all sensor power via mosfet transistor
-const uint8_t ERRORLED = 13;
+
+
+#if defined LEDDEBUG
+const uint8_t ERRORLED=2;
+const uint8_t INFOLED=3;
+const uint8_t SUCCESSLED=4;
+#endif
 
 
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
@@ -51,7 +57,6 @@ SdFat SD;
 //Часы. Tyny RTC clock
 tmElements_t tm;
 
-
 void setup() {
 
   #if defined DEBUGMODE
@@ -63,7 +68,7 @@ void setup() {
   pinMode(POWER_SWITCH, OUTPUT);
 
   digitalWrite(POWER_SWITCH, HIGH);
-  delay(100);
+  delay(500);
 
 
   //Включаем датчик температуры и влажности
@@ -71,9 +76,21 @@ void setup() {
 
   //Включаем датчик давления
   bmp.begin();
-
+  
+  
   #if defined LEDDEBUG
-    errorFlash(ERRORLED,1);
+    pinMode(ERRORLED, OUTPUT);
+    pinMode(INFOLED, OUTPUT);
+    pinMode(SUCCESSLED, OUTPUT);
+    setled(ERRORLED,1,INFOLED,1,SUCCESSLED,1);
+    delay(1000);
+    setled(ERRORLED,0,INFOLED,0,SUCCESSLED,1);
+    delay(1000);
+    setled(ERRORLED,1,INFOLED,0,SUCCESSLED,0);
+    delay(1000);
+    setled(ERRORLED,0,INFOLED,1,SUCCESSLED,0);
+    delay(1000);
+    setled(ERRORLED,0,INFOLED,0,SUCCESSLED,0);
   #endif
 
   pressure = aver_sens();          // найти текущее давление по среднему арифметическому
@@ -85,12 +102,12 @@ void setup() {
 }
 
 void loop() {
-
-
+  
   digitalWrite(POWER_SWITCH, HIGH);
-  delay(500);
+  delay(1000);
 
   startAndControl ("Initializing sd...", SD.begin(SD_SC), 2);
+  
   //Read temperature
 
   startAndControl ("Read temperature from pressure sensor ...", bmp.readTemperature(), 3);
@@ -110,7 +127,7 @@ void loop() {
    
   // Проверка удачно прошло ли считывание.
   
-  startAndControl ("Check readed data from sensors...", isnan(h) && isnan(t)&& isnan(p), 8);
+  startAndControl ("Check readed data from sensors...", isnan(h) && isnan(t)&& isnan(p), 5);
 
   pressure = aver_sens();                          // найти текущее давление по среднему арифметическому
   for (byte i = 0; i < 5; i++) {                   // счётчик от 0 до 5 (да, до 5. Так как 4 меньше 5)
@@ -137,20 +154,20 @@ void loop() {
   
   check_data = "weather,location=uglovo,region=aerodrom temp="+String (t)+",hum="+String (h)+",pressure="+String (p)+",delta="+String (delta)+" "+String (makeTime(tm))+"000000000";
   
-  write_to_sd (all_data, all_data_file, check_data, 9);
+  write_to_sd (all_data, all_data_file, check_data, 6);
 
-  write_to_sd (current_day_file, current_data_file, check_data, 10);
+  write_to_sd (current_day_file, current_data_file, check_data, 7);
   
-  write_to_sd (current_data, current_day_file_file, check_data, 11);
+  write_to_sd (current_data, current_day_file_file, check_data, 8);
 
   if ( tm.Hour == 23 and tm.Minute >45 ) {
-    startAndControl ("Remove current day file...", SD.remove("current.txt"), 12);
+    startAndControl ("Remove current day file... ", SD.remove("current.txt"), 9);
      
   }
   
   //turn off power via mosfet
   delay(2000);
-  digitalWrite(POWER_SWITCH, LOW);
+  digitalWrite(POWER_SWITCH,LOW);
   delay(2000);
    
   
@@ -167,40 +184,7 @@ long aver_sens() {
 }
 
 
-void flash (char led, unsigned short interval, unsigned short pause)
-{ while(1){
-  digitalWrite(led, HIGH);
-  delay(interval);
-  digitalWrite(led, LOW);
-  delay(pause); 
-}
- 
-  }
-
-void startAndControl (String message,boolean command,uint8_t count) {
-  #if defined DEBUGMODE
-  SerialDEBUG.print(message+"\r\n");
-  #endif
-  boolean state = true;
-  while (state) {
-    if (!command) {
-        #if defined DEBUGMODE
-        SerialDEBUG.println(" Failed");
-        #endif
-        #if defined LEDDEBUG
-          errorFlash(ERRORLED,count);        
-        #endif
-        return;
-       }
-    else {
-      state = false;
-      #if defined DEBUGMODE
-      SerialDEBUG.println(" OK");
-      #endif
-      } 
-   }
-  }
-
+#if defined LEDDEBUG
 void flash (uint8_t led, uint8_t count, unsigned short interval, unsigned short pause)
 { 
   uint8_t  i;
@@ -215,14 +199,63 @@ void flash (uint8_t led, uint8_t count, unsigned short interval, unsigned short 
  
   }
 
-void errorFlash (uint8_t errorled, uint8_t count)
+void setled (uint8_t led1,uint8_t state1,uint8_t led2,uint8_t state2,uint8_t led3,uint8_t state3)
+{ 
 
+  digitalWrite(led1, state1);
+  digitalWrite(led2, state2);
+  digitalWrite(led3, state3);
+    
+}
+
+void errorFlash (uint8_t errorled, uint8_t count)
 {   
     flash(errorled,count,100,100);
     digitalWrite(errorled, HIGH);
     delay(2000);
     digitalWrite(errorled, LOW);
   }
+
+void successFlash (uint8_t successled, uint8_t count)
+{
+    flash(successled,count,100,100);
+}
+
+void infoFlash (uint8_t infoled, uint8_t count)
+{
+    flash(infoled,count,70,70);
+    delay(100);
+}
+#endif
+
+
+void startAndControl (String message,boolean command,uint8_t count) {
+  #if defined DEBUGMODE
+  SerialDEBUG.print(message+"\r\n");
+  #endif
+  boolean state = true;
+  while (state) {
+    if (!command) {
+        #if defined DEBUGMODE
+        SerialDEBUG.print("Failed");
+        #endif
+        #if defined LEDDEBUG
+        errorFlash(ERRORLED,count);
+        #endif
+        return;
+       }
+    else {
+      state = false;
+      #if defined LEDDEBUG
+      successFlash(SUCCESSLED,count);
+      #endif
+      #if defined DEBUGMODE
+      SerialDEBUG.println("OK");
+      #endif
+      } 
+   }
+  }
+
 
 void write_to_sd (String filename, File file_var, String check_data, uint8_t count) {
 
@@ -241,6 +274,9 @@ void write_to_sd (String filename, File file_var, String check_data, uint8_t cou
     #endif
     #if defined DEBUGMODE
       SerialDEBUG.println("Cannot write to file "+String(filename));
+    #endif
+    #if defined LEDDEBUG
+      successFlash(SUCCESSLED,count);        
     #endif
     return; 
   }
