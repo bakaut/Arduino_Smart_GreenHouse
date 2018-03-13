@@ -19,8 +19,8 @@
 #define PAUSE 500
 
 
-//#define DEBUGMODE
-#define LEDDEBUG
+#define DEBUGMODE
+//#define LEDDEBUG
 
 //Serial port for logging. Use Hardware Serial  on Mega, or software serial for Nano
 #if defined DEBUGMODE
@@ -260,25 +260,9 @@ void startAndControl (String message,boolean command,uint8_t count) {
 void write_to_sd (String filename, File file_var, String check_data, uint8_t count) {
 
   startAndControl ("Open file..." + filename, file_var = SD.open(filename, FILE_WRITE), count);
-  delay(20);
-
-  if(file_var) {
-    file_var.println(check_data);
-    file_var.close();        
-  }
-
-  else {
-    file_var.close();
-    #if defined LEDDEBUG
-      errorFlash(ERRORLED,count);        
-    #endif
-    #if defined DEBUGMODE
-      SerialDEBUG.println("Cannot write to file "+String(filename));
-    #endif
-    #if defined LEDDEBUG
-      successFlash(SUCCESSLED,count);        
-    #endif
-    return; 
-  }
+  delay(50);
+  startAndControl ("Write data to file..." + filename, file_var.println(check_data), count);
+  delay(50);
+  startAndControl ("Close file..." + filename, file_var.close(), count);
 
 }
