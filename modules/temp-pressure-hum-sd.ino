@@ -19,16 +19,18 @@
 #define PAUSE 500
 
 
+#define WRITESD
 //#define DEBUGMODE
-#define LEDDEBUG
+//#define LEDDEBUG
 
 //Serial port for logging. Use Hardware Serial  on Mega, or software serial for Nano
 #if defined DEBUGMODE
 #define SerialDEBUG Serial
 #endif
 
-
+#ifdef WRITESD
 const uint8_t SD_SC = 10; //SD card 
+#endif
 const uint8_t POWER_SWITCH = 5; //Turn on or turn off all sensor power via mosfet transistor
 const uint8_t ERRORLED = 13;
 
@@ -46,8 +48,10 @@ File all_data_file, current_data_file, current_day_file_file;
 DHT dht(DHTPIN, DHT22);
 //Датчик давления
 Adafruit_BMP085 bmp;
+#ifdef WRITESD
 //SD Карта
 SdFat SD;
+#endif
 //Часы. Tyny RTC clock
 tmElements_t tm;
 
@@ -89,10 +93,10 @@ void loop() {
 
   digitalWrite(POWER_SWITCH, HIGH);
   delay(500);
-
+#ifdef WRITESD
   startAndControl ("Initializing sd...", SD.begin(SD_SC), 2);
   //Read temperature
-
+#endif
   startAndControl ("Read temperature from pressure sensor ...", bmp.readTemperature(), 3);
   delay(100);
   
@@ -110,7 +114,7 @@ void loop() {
    
   // Проверка удачно прошло ли считывание.
   
-  startAndControl ("Check readed data from sensors...", isnan(h) && isnan(t)&& isnan(p), 8);
+  //startAndControl ("Check readed data from sensors...", isnan(h) && isnan(t)&& isnan(p), 8);
 
   pressure = aver_sens();                          // найти текущее давление по среднему арифметическому
   for (byte i = 0; i < 5; i++) {                   // счётчик от 0 до 5 (да, до 5. Так как 4 меньше 5)
@@ -136,7 +140,10 @@ void loop() {
   delta = a * 6;                   // расчёт изменения давления
   
   check_data = "weather,location=uglovo,region=aerodrom temp="+String (t)+",hum="+String (h)+",pressure="+String (p)+",delta="+String (delta)+" "+String (makeTime(tm))+"000000000";
-  
+  #if defined DEBUGMODE
+  SerialDEBUG.println(check_data);
+  #endif 
+  #ifdef WRITESD
   write_to_sd (all_data, all_data_file, check_data, 9);
 
   write_to_sd (current_day_file, current_data_file, check_data, 10);
@@ -147,7 +154,7 @@ void loop() {
     startAndControl ("Remove current day file...", SD.remove("current.txt"), 12);
      
   }
-  
+  #endif
   //turn off power via mosfet
   delay(2000);
   digitalWrite(POWER_SWITCH, LOW);
@@ -223,7 +230,7 @@ void errorFlash (uint8_t errorled, uint8_t count)
     delay(2000);
     digitalWrite(errorled, LOW);
   }
-
+#ifdef WRITESD
 void write_to_sd (String filename, File file_var, String check_data, uint8_t count) {
 
   startAndControl ("Open file..." + filename, file_var = SD.open(filename, FILE_WRITE), count);
@@ -246,3 +253,4 @@ void write_to_sd (String filename, File file_var, String check_data, uint8_t cou
   }
 
 }
+#endif
