@@ -158,7 +158,7 @@ void loop() {
   //turn off power via mosfet
   delay(2000);
   digitalWrite(POWER_SWITCH, LOW);
-  delay(2000);
+  delay(5000);
    
   
   }
@@ -236,21 +236,8 @@ void write_to_sd (String filename, File file_var, String check_data, uint8_t cou
   startAndControl ("Open file..." + filename, file_var = SD.open(filename, FILE_WRITE), count);
   delay(20);
 
-  if(file_var) {
-    file_var.println(check_data);
-    file_var.close();        
-  }
-
-  else {
-    file_var.close();
-    #if defined LEDDEBUG
-      errorFlash(ERRORLED,count);        
-    #endif
-    #if defined DEBUGMODE
-      SerialDEBUG.println("Cannot write to file "+String(filename));
-    #endif
-    return; 
-  }
+  file_var.println(check_data);
+  file_var.close();        
 
 }
 #endif
