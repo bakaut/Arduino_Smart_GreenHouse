@@ -1,3 +1,4 @@
+//#include "Sleeper.h"
 #include <Time.h>
 #include <TimeLib.h>
 #include <DS1307RTC.h>
@@ -38,8 +39,8 @@ const uint8_t ERRORLED = 13;
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
 unsigned long sumX, sumY, sumX2, sumXY;
 int delta,current_day;
-float a,h,t,p;
-String check_data; //all sensor data in inflife line protocol
+float a,h,t,p,t_int;
+String check_data,check_data_prefix; //all sensor data in inflife line protocol
 String all_data = "file.txt", current_data = "current.txt", current_day_file;
 File all_data_file, current_data_file, current_day_file_file;
 
@@ -55,6 +56,7 @@ SdFat SD;
 //Часы. Tyny RTC clock
 tmElements_t tm;
 
+//Sleeper g_sleeper;
 
 void setup() {
 
@@ -110,6 +112,7 @@ void loop() {
   h = dht.readHumidity();
   t = dht.readTemperature();
   p = bmp.readPressure();
+  t_int = bmp.readTemperature();
   
    
   // Проверка удачно прошло ли считывание.
@@ -139,11 +142,15 @@ void loop() {
   a = (float)a / (6 * sumX2 - sumX * sumX);
   delta = a * 6;                   // расчёт изменения давления
   
-  check_data = "weather,location=uglovo,region=aerodrom temp="+String (t)+",hum="+String (h)+",pressure="+String (p)+",delta="+String (delta)+" "+String (makeTime(tm))+"000000000";
+  //140 symvol restriction. Make 2 String variable.
+  check_data_prefix = "weather,location=uglovo,region=aerodrom ";
+  check_data = "te="+String (t)+",ti="+String (t_int)+",td="+String (t-t_int)+",h="+String (h)+",p="+String (p)+",pd="+String (delta)+" "+String (makeTime(tm))+"000000000";
+  
   #if defined DEBUGMODE
   SerialDEBUG.println(check_data);
   #endif 
   #ifdef WRITESD
+  
   write_to_sd (all_data, all_data_file, check_data, 9);
 
   write_to_sd (current_day_file, current_data_file, check_data, 10);
@@ -159,7 +166,7 @@ void loop() {
   delay(2000);
   digitalWrite(POWER_SWITCH, LOW);
   delay(5000);
-   
+  //g_sleeper.SleepMillis(5000);  
   
   }
 
@@ -234,10 +241,11 @@ void errorFlash (uint8_t errorled, uint8_t count)
 void write_to_sd (String filename, File file_var, String check_data, uint8_t count) {
 
   startAndControl ("Open file..." + filename, file_var = SD.open(filename, FILE_WRITE), count);
-  delay(20);
-
+  delay(100);
+  file_var.print(check_data_prefix);
+  file_var.position();
   file_var.println(check_data);
-  file_var.close();        
-
+  file_var.close();
+  delay(200);      
 }
 #endif
