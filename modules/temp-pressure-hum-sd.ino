@@ -14,7 +14,6 @@
 #include <SysCall.h> 
 
 #define DHTPIN A0 // номер пина, к которому подсоединен датчик температуры
-#define DHTPIN2 A1 // номер пина, к которому подсоединен датчик температуры внутренний
 #define MINI 100
 #define MAXI 700
 #define PAUSE 500
@@ -23,6 +22,7 @@
 const uint8_t SD_SC = 10; //SD card 
 const uint8_t POWER_SWITCH = 5; //Turn on or turn off all sensor power via mosfet transistor
 const uint8_t ERRORLED = 13;
+const uint8_t DHTPIN2 = 7; // номер пина, к которому подсоединен датчик температуры внутренний
 
 
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
