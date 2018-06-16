@@ -25,3 +25,13 @@ https://github.com/bakaut/Arduino_Smart_GreenHouse/blob/master/modules/temp-pres
 * Все датчики через транзистор отключаются. Включаются только на 15 секунд каждые 10 минут
 
 
+Отправка данных в облако:
+
+https://github.com/bakaut/Arduino_Smart_GreenHouse/blob/master/modules/gprs-web-post-request.example.ino
+
+Платформа:
+* Arduino Mega (на nano не получилось сделать)
+
+Функционал:
+* Чтение с sd карты
+* Отправка в облако через gsm модуль (A7 I thinker)
