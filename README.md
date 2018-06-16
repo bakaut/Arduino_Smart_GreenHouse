@@ -42,3 +42,7 @@ https://github.com/bakaut/Arduino_Smart_GreenHouse/blob/master/modules/gprs-web-
 Функционал:
 * Чтение с sd карты
 * Отправка в облако через gsm модуль (A7 I thinker)
+
+## Фото проекта
+
+
