@@ -46,4 +46,5 @@ https://github.com/bakaut/Arduino_Smart_GreenHouse/blob/master/modules/gprs-web-
 ## Фото проекта
 
 ![main](photo/20180227_001432[1].jpg)
+![sun](photo/20180227_001441[1].jpg)
 
