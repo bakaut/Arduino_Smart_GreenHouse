@@ -1,6 +1,8 @@
 # Arduino_Smart_GreenHouse
 Умная теплица на ардуино.
 
+## Сбор парамтеров и запись на sd
+
 https://github.com/bakaut/Arduino_Smart_GreenHouse/blob/master/modules/temp-pressure-hum-sd.ino
 
 Платформа:
@@ -25,7 +27,7 @@ https://github.com/bakaut/Arduino_Smart_GreenHouse/blob/master/modules/temp-pres
 * Все датчики через транзистор отключаются. Включаются только на 15 секунд каждые 10 минут
 
 
-Отправка данных в облако:
+## Отправка данных в облако:
 
 https://github.com/bakaut/Arduino_Smart_GreenHouse/blob/master/modules/gprs-web-post-request.example.ino
 
