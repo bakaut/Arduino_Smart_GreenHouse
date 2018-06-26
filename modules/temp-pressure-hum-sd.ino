@@ -22,12 +22,13 @@
 const uint8_t SD_SC = 10; //SD card 
 const uint8_t POWER_SWITCH = 5; //Turn on or turn off all sensor power via mosfet transistor
 const uint8_t ERRORLED = 13;
+const uint8_t DHTPIN2 = 7; // номер пина, к которому подсоединен датчик температуры внутренний
 
 
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
 unsigned long sumX, sumY, sumX2, sumXY;
 int delta,current_day;
-float a,h,t,p,t_int;
+float a,h,t,p,t_int,hi;
 String check_data_prefix; //all sensor data in inflife line protocol
 String all_data = "file.txt", current_data = "current.txt", current_day_file;
 File all_data_file, current_data_file, current_day_file_file;
@@ -35,6 +36,7 @@ File all_data_file, current_data_file, current_day_file_file;
 
 //Датчик температуры и влажности
 DHT dht(DHTPIN, DHT22);
+DHT dhti(DHTPIN2, DHT11);
 //Датчик давления
 Adafruit_BMP085 bmp;
 //SD Карта
@@ -53,6 +55,7 @@ void setup() {
 
   //Включаем датчик температуры и влажности
   dht.begin();
+  dhti.begin();
 
   //Включаем датчик давления
   bmp.begin();
@@ -84,6 +87,7 @@ void loop() {
    
   //Считываем влажность, температуру. давление
   h = dht.readHumidity();
+  hi = dhti.readHumidity();
   t = dht.readTemperature();
   p = bmp.readPressure();
   t_int = bmp.readTemperature();
@@ -114,7 +118,7 @@ void loop() {
   
   //140 symvol restriction. Make 2 String variable.
   check_data_prefix = "weather,location=uglovo,region=aerodrom ";
-  const String check_data = "te="+String (t)+",ti="+String (t_int)+",td="+String (t-t_int)+",h="+String (h)+",p="+String (p)+",pd="+String (delta)+" "+String (makeTime(tm))+"000000000";
+  const String check_data = "te="+String (t)+",ti="+String (t_int)+",td="+String (t-t_int)+",h="+String (h)+",hi="+String (hi)+",p="+String (p)+",pd="+String (delta)+" "+String (makeTime(tm));
   
   
   write_to_sd (all_data, all_data_file, check_data, check_data_prefix);
@@ -150,7 +154,9 @@ void write_to_sd (String filename, File file_var, String check_data, String chec
   delay(100);
   file_var.print(check_data_prefix);
   file_var.position();
-  file_var.println(check_data);
+  file_var.print(check_data);
+  file_var.position();
+  file_var.println("000000000");
   file_var.close();
   delay(100);      
 }
