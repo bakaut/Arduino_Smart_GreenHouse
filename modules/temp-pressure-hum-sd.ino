@@ -5,6 +5,7 @@
 #include "DHT.h"
 #include <SPI.h>
 #include <Adafruit_BMP085.h>
+//#include <EEPROM.h>
 
 #include <BlockDriver.h>
 #include <FreeStack.h>
@@ -29,9 +30,10 @@ unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
 unsigned long sumX, sumY, sumX2, sumXY;
 int delta,current_day;
 float a,h,t,p,t_int,hi;
-String check_data_prefix; //all sensor data in inflife line protocol
+//float yy,mm,dd,hh,m;
+String check_data_prefix,data_string; //all sensor data in inflife line protocol
 String all_data = "file.txt", current_data = "current.txt", current_day_file;
-File all_data_file, current_data_file, current_day_file_file;
+File all_data_file, current_data_file, current_day_file_file,time_set;
 
 
 //Датчик температуры и влажности
@@ -45,6 +47,13 @@ SdFat SD;
 tmElements_t tm;
 
 void setup() {
+/*
+  EEPROM.put(0, 2018);
+  EEPROM.put(1, 7);
+  EEPROM.put(2, 20);
+  EEPROM.put(3, 00);
+  EEPROM.put(4, 00);
+*/
 
  //Включаем питание датчиков через транзистор
   pinMode(POWER_SWITCH, OUTPUT);
@@ -83,7 +92,7 @@ void loop() {
   RTC.read(tm);
   delay(700);
   current_day = tm.Day;
-  current_day_file = String (current_day);
+  current_day_file = String (current_day)+"-"+String(tm.Month);
    
   //Считываем влажность, температуру. давление
   h = dht.readHumidity();
@@ -121,21 +130,42 @@ void loop() {
   const String check_data = "te="+String (t)+",ti="+String (t_int)+",td="+String (t-t_int)+",h="+String (h)+",hi="+String (hi)+",p="+String (p)+",pd="+String (delta)+" "+String (makeTime(tm));
   
   
-  write_to_sd (all_data, all_data_file, check_data, check_data_prefix);
+// write_to_sd (all_data, all_data_file, check_data, check_data_prefix);
   write_to_sd (current_day_file, current_data_file, check_data, check_data_prefix);
-  write_to_sd (current_data, current_day_file_file, check_data, check_data_prefix);
+//write_to_sd (current_data, current_day_file_file, check_data, check_data_prefix);
 
-  if ( tm.Hour == 23 and tm.Minute >45 ) {
-     SD.remove("current.txt");  
-  }
+//  if ( tm.Hour == 23 and tm.Minute >45 ) {
+//     SD.remove("current.txt");  
+//  }
 
   //turn off power via mosfet
   delay(2000);
   digitalWrite(POWER_SWITCH, LOW);
   delay(600000);//10 minutes
 
-  
+  if (int(makeTime(tm)) > 1627839741) {
+    tm.Year = CalendarYrToTm(2018);
   }
+  
+  /*
+  //check work. read sd file last line and analize it. Main problem rtl clock reset
+  //NAN string,  timestamp 947412618000000000 GMT: Wednesday, 23 March 2270 г., 05:43:00
+  
+  // if error date set priv(to do store in eeprom no file open)
+  if (int(makeTime(tm)) > 1627839741) {
+    //open file
+    time_set = SD.open(current_day_file, FILE_READ);
+    //read last 10 symbols
+    time_set.seek(daily_file.size()-10); //10 simbols 1527839741
+    time_set.position();
+    while (time_set.available()) {
+      data_string = time_set.readStringUntil('\n');
+      data_string.trim();      
+    }
+    //set time from utc
+
+  }
+  */
 
 // среднее арифметичсекое от давления
 long aver_sens() {
