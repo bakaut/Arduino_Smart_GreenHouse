@@ -1,10 +1,17 @@
 #include "DHT.h"
 #include <Wire.h>
 #include <Adafruit_BMP280.h>
+#include <SPI.h>
+#include <LoRa.h>
 
 #define DHTPIN A0 // номер пина, к которому подсоединен датчик температуры
 #define DHTPINUPPER A1 // номер пина, к которому подсоединен датчик температуры выше
 #define BMP280I2C 0x76
+#define LORAFREQ 433E6
+#define MINI 100
+#define MAXI 700
+#define PAUSE 500
+
 #define DEBUGMODE
 //#define LEDDEBUG
 
@@ -49,9 +56,14 @@ void setup() {
   //Включаем датчик температуры и влажности
   dht.begin();
   dhtUpper.begin();
-  bmp.begin(BMP280I2C);
-  //startAndControl ("Power on dht sensor...", dht.begin(),1);
-
+  
+  //Включаем датчик давления
+  startAndControl ("Starting bpm 280...", bmp.begin(BMP280I2C),1);
+  //bmp.begin(BMP280I2C); 
+  
+  //Включаем передатчик
+  startAndControl ("Starting lora radio...", LoRa.begin(LORAFREQ),2);
+  
   pressure = aver_sens();          // найти текущее давление по среднему арифметическому
   for (byte i = 0; i < 6; i++) {   // счётчик от 0 до 5
     pressure_array[i] = pressure;  // забить весь массив текущим давлением
@@ -72,9 +84,12 @@ void loop() {
   t_down = bmp.readTemperature();
   al = bmp.readAltitude(70); //Высоты над уровнем моря в метрах в Углово
 
-
  
-  //startAndControl ("Check readed data from sensors...", isnan(h) && isnan(t),2);
+  startAndControl ("Check readed data from sensors temp...", isdigit(t) , 3);
+  startAndControl ("Check readed data from sensors... temp2", isdigit(t_up) , 3);
+  startAndControl ("Check readed data from sensors... hum", isdigit(h) , 3);
+  startAndControl ("Check readed data from sensors... hum2", isdigit(h_up) , 3);
+  startAndControl ("Check readed data from sensors... pressure", isdigit(p) , 3);
 
   // put your main code here, to run repeatedly:
 
@@ -103,12 +118,15 @@ void loop() {
 
 
   check_data_prefix = "weather,location=uglovo,region=aerodrom ";
-  check_data = "te="+String (t)+",ti="+String (t_up)+",td="+String (t-t_up)+",h="+String (h)+",hi="+String (h_up)+",hd="+String (h_up-h)+",p="+String (p)+",pd="+String (delta);
+  check_data = "te="+String (t)+",ti="+String (t_up)+",td="+String (t-t_up)+",h="+String (h)+",hi="+String (h_up)+",hd="+String (h_up-h)+",p="+String (p)+",pd="+String (delta)+"\r\n";
   
   #if defined DEBUGMODE
   SerialDEBUG.print(check_data_prefix+check_data);
   #endif
-  
+
+  LoRa.beginPacket();
+  LoRa.print(check_data_prefix+check_data);
+  LoRa.endPacket();
   delay(5000);
 
 }
