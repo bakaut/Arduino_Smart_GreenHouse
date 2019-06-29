@@ -127,7 +127,7 @@ void setup() {
 
   LoRa.beginPacket();
   LoRa.print(check_data_prefix+check_data);
-  LoRa.endPacket();
+  startAndControl ("Sent lora packet...", LoRa.endPacket() , 6);
 }
 
 void loop() {
@@ -143,7 +143,7 @@ void loop() {
   f_wdt = 0;
 
   // Re-enter sleep mode.
-  enterSleep();
+  startAndControl ("Sent lora packet...", enterSleep() , 7);
 
 }
 
