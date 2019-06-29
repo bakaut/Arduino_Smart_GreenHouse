@@ -143,7 +143,8 @@ void loop() {
   f_wdt = 0;
 
   // Re-enter sleep mode.
-  startAndControl ("Sent lora packet...", enterSleep() , 7);
+  enterSleep();
+  startAndControl ("Enter sleep ...", bmp.readTemperature(), 7);
 
 }
 
