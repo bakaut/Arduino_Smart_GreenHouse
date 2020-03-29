@@ -1,19 +1,29 @@
+//#define DEBUGMODE
+//#define LEDDEBUG
+//#define OLEDDEBUG
+
+#if defined OLEDDEBUG
+#include <Adafruit_SSD1306.h>
+#endif
+
 #include "DHT.h"
 #include <Wire.h>
 #include <Adafruit_BMP280.h>
 #include <SPI.h>
 #include <LoRa.h>
 
+
 #define DHTPIN A0 // номер пина, к которому подсоединен датчик температуры
 #define DHTPINUPPER A1 // номер пина, к которому подсоединен датчик температуры выше
 #define BMP280I2C 0x76
 #define LORAFREQ 433E6
+
+#if defined LEDDEBUG
 #define MINI 100
 #define MAXI 700
 #define PAUSE 500
+#endif
 
-#define DEBUGMODE
-//#define LEDDEBUG
 
 
 //Serial port for logging. Use Hardware Serial  on Mega, or software serial for Nano
@@ -27,13 +37,20 @@
 #define SerialDEBUG Serial
 #endif
 
+#if defined LEDDEBUG
 const uint8_t ERRORLED = 13;
+#endif
+
 float h,t,h_up,t_up,t_down,p,al,delta,a;
 
 unsigned long pressure, aver_pressure, pressure_array[6], time_array[6];
 unsigned long sumX, sumY, sumX2, sumXY;
 
-String check_data,check_data_prefix; //all sensor data in inflife line protocol
+String check_data; //all sensor data in inflife line protocol
+
+#if defined OLEDDEBUG
+Adafruit_SSD1306 display(4); //I2C
+#endif
 
 Adafruit_BMP280 bmp; // I2C
 DHT dht(DHTPIN, DHT22);//Датчик температуры и влажности наружний
@@ -70,6 +87,13 @@ void setup() {
     time_array[i] = i;             // забить массив времени числами 0 - 5
   }
 
+  #if defined OLEDDEBUG
+    display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
+    display.display();
+    delay(1000);
+    display.clearDisplay();
+  #endif
+
 }
 
 void loop() {
@@ -83,6 +107,17 @@ void loop() {
   p = bmp.readPressure();
   t_down = bmp.readTemperature();
   al = bmp.readAltitude(70); //Высоты над уровнем моря в метрах в Углово
+
+  #if defined OLEDDEBUG
+    ToOledPrint("h=" + String(h), "print", 0,5);
+    ToOledPrint("t=" + String(t), "print", 0,5);
+    ToOledPrint("h_u=" + String(h_up), "print", 0,5);
+    ToOledPrint("t_u=" + String(t_up), "print", 0,5);
+    ToOledPrint("p=" + String(p), "print", 0,5);
+    ToOledPrint("a=" + String(al), "print", 0,5);
+    ToOledPrint("a=" + String(al), "print", 0,5);
+  #endif
+
 
  
   startAndControl ("Check readed data from sensors temp...", isdigit(t) , 3);
@@ -117,7 +152,7 @@ void loop() {
   delta = a * 6;                   // расчёт изменения давления
 
 
-  check_data_prefix = "weather,location=uglovo,region=aerodrom ";
+  //check_data_prefix = "weather,location=uglovo,region=aerodrom ";//move to server
   check_data = "te="+String (t)+",ti="+String (t_up)+",td="+String (t-t_up)+",h="+String (h)+",hi="+String (h_up)+",hd="+String (h_up-h)+",p="+String (p)+",pd="+String (delta)+"\r\n";
   
   #if defined DEBUGMODE
@@ -125,9 +160,9 @@ void loop() {
   #endif
 
   LoRa.beginPacket();
-  LoRa.print(check_data_prefix+check_data);
+  LoRa.print(check_data);
   LoRa.endPacket();
-  delay(5000);
+  delay(600000);
 
 }
 
@@ -169,6 +204,7 @@ void startAndControl (String message,boolean command,uint8_t count) {
  
   }
 
+#if defined LEDDEBUG
 void errorFlash (uint8_t errorled, uint8_t count)
 
 {   
@@ -177,6 +213,8 @@ void errorFlash (uint8_t errorled, uint8_t count)
     delay(2000);
     digitalWrite(errorled, LOW);
 }
+#endif
+
 // среднее арифметичсекое от давления
 long aver_sens() {
   pressure = 0;
@@ -186,3 +224,23 @@ long aver_sens() {
   aver_pressure = pressure / 10;
   return aver_pressure;
 }
+
+#if defined OLEDDEBUG
+void ToOledPrint(String text, String mode, int x, int y) {
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setCursor(x,y);
+  if(mode == "print"){
+    display.setTextColor(WHITE);
+    display.println(text); 
+    display.display(); 
+  }
+  else {
+    
+    display.setTextColor(BLACK);
+    display.println(text);
+    display.display();  
+  }
+  delay(2000);
+}
+#endif
